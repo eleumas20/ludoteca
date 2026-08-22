@@ -258,7 +258,7 @@
               <p class="text-xs text-emerald-400 font-semibold truncate">Copertina Caricata</p>
               <p class="text-[10px] text-slate-400">Pronta per essere salvata</p>
             </div>
-            <button type="button" onclick="clearCoverPreview()" class="text-xs text-slate-400 hover:text-rose-400 font-bold px-2 py-1 cursor-pointer">✕ Rimuovi</button>
+            <button type="button" onclick="clearCoverPreview()" class="text-xs text-rose-400 font-bold px-2 py-1 cursor-pointer">✕ Rimuovi</button>
           </div>
 
           <div>
@@ -346,9 +346,13 @@
     ];
 
     function saveToStorage() {
-      localStorage.setItem('boardgames_db', JSON.stringify(games));
-      renderTagFilters();
-      renderGames();
+      try {
+        localStorage.setItem('boardgames_db', JSON.stringify(games));
+        renderTagFilters();
+        renderGames();
+      } catch (err) {
+        alert("Spazio di memoria locale esaurito! Usa link URL web anziché file pesanti per le immagini.");
+      }
     }
 
     function openApiKeyModal() {
@@ -584,9 +588,9 @@
     async function handleFileSelected(e) {
       const file = e.target.files[0];
       if (file) {
-        const base64 = await toBase64(file);
-        document.getElementById('formImageUrl').value = base64;
-        document.getElementById('formImagePreview').src = base64;
+        const compressedBase64 = await resizeImage(file, 400, 400, 0.7);
+        document.getElementById('formImageUrl').value = compressedBase64;
+        document.getElementById('formImagePreview').src = compressedBase64;
         const urlInput = document.getElementById('formImageUrlInput');
         if (urlInput) urlInput.value = '';
         const prev = document.getElementById('previewCoverContainer');
@@ -597,6 +601,39 @@
       }
     }
 
+    // Funzione per comprimere e ridimensionare immagini locali per evitare il limite di storage
+    function resizeImage(file, maxWidth, maxHeight, quality) {
+      return new Promise((resolve) => {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          const img = new Image();
+          img.onload = function() {
+            let width = img.width;
+            let height = img.height;
+            if (width > height) {
+              if (width > maxWidth) {
+                height *= maxWidth / width;
+                width = maxWidth;
+              }
+            } else {
+              if (height > maxHeight) {
+                width *= maxHeight / height;
+                height = maxHeight;
+              }
+            }
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            resolve(canvas.toDataURL('image/jpeg', quality));
+          };
+          img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+
     window.addEventListener('paste', async e => {
       const modal = document.getElementById('formModal');
       if (modal && !modal.classList.contains('hidden')) {
@@ -604,9 +641,9 @@
         for (const item of items) {
           if (item.kind === 'file' && item.type.startsWith('image/')) {
             const file = item.getAsFile();
-            const base64 = await toBase64(file);
-            document.getElementById('formImageUrl').value = base64;
-            document.getElementById('formImagePreview').src = base64;
+            const compressedBase64 = await resizeImage(file, 400, 400, 0.7);
+            document.getElementById('formImageUrl').value = compressedBase64;
+            document.getElementById('formImagePreview').src = compressedBase64;
             const prev = document.getElementById('previewCoverContainer');
             if (prev) {
               prev.classList.remove('hidden');
@@ -655,7 +692,6 @@ Struttura JSON:
   "desc": "Descrizione sintetica in 2-3 frasi in italiano delle meccaniche e del contenuto."
 }`;
 
-      // Utilizzo dei modelli stabili attivi
       const candidateModels = [
         "gemini-2.5-flash",
         "gemini-3.5-flash"
@@ -1130,7 +1166,7 @@ Struttura JSON:
         let imgData = (imgUrlField && imgUrlField.value) ? imgUrlField.value : '';
 
         if (fileInput && fileInput.files && fileInput.files[0]) {
-          imgData = await toBase64(fileInput.files[0]);
+          imgData = await resizeImage(fileInput.files[0], 400, 400, 0.7);
         }
 
         const existingGame = games.find(g => g.id === id);
