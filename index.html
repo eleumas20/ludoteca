@@ -20,9 +20,14 @@
     <div class="max-w-4xl mx-auto flex items-center justify-between">
       <div class="flex items-center gap-2">
         <h1 class="text-xl font-black bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">🎲 Ludoteca</h1>
-        <button type="button" onclick="openLeaderboardModal()" class="bg-amber-500/25 hover:bg-amber-500/35 text-amber-300 border border-amber-500/40 text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 active:scale-95 cursor-pointer">
-          🏆 Classifica
-        </button>
+        <div class="flex gap-1.5">
+          <button type="button" onclick="openLeaderboardModal()" class="bg-amber-500/25 hover:bg-amber-500/35 text-amber-300 border border-amber-500/40 text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 active:scale-95 cursor-pointer">
+            🏆 Classifica
+          </button>
+          <button type="button" onclick="openStatsModal()" class="bg-indigo-500/25 hover:bg-indigo-500/35 text-indigo-300 border border-indigo-500/40 text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 active:scale-95 cursor-pointer">
+            📊 Stats
+          </button>
+        </div>
       </div>
       <div class="flex gap-2 items-center">
         <button type="button" onclick="openApiKeyModal()" title="Imposta Chiave IA" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-indigo-300 border border-indigo-700/60 flex items-center gap-1 cursor-pointer">
@@ -38,7 +43,7 @@
       </div>
     </div>
 
-    <!-- Barra Ricerca, Ordinamento & Filtri -->
+    <!-- Barra Ricerca, Filtri Avanzati & Ordinamento -->
     <div class="max-w-4xl mx-auto mt-3 space-y-2">
       <div class="flex flex-col sm:flex-row gap-2">
         <div class="relative flex-1">
@@ -46,14 +51,36 @@
           <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
         </div>
         
-        <div class="flex gap-2">
+        <div class="flex flex-wrap gap-2">
+          <!-- Filtro Tipologia -->
           <select id="filterType" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
             <option value="">Tutti i formati</option>
             <option value="base">🎲 Giochi Base</option>
-            <option value="standalone">⚡ Esp. Standalone</option>
-            <option value="expansion">🧩 Esp. Dipendenti</option>
+            <option value="standalone">⚡ Standalone</option>
+            <option value="expansion">🧩 Espansioni</option>
+            <option value="wishlist">⭐ Wishlist</option>
           </select>
 
+          <!-- Filtro Giocatori Serata -->
+          <select id="filterPlayers" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
+            <option value="">👥 Quanti al tavolo?</option>
+            <option value="1">1 Giocatore (Solo)</option>
+            <option value="2">2 Giocatori</option>
+            <option value="3">3 Giocatori</option>
+            <option value="4">4 Giocatori</option>
+            <option value="5">5+ Giocatori</option>
+          </select>
+
+          <!-- Filtro Durata Max -->
+          <select id="filterMaxTime" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
+            <option value="">⏱️ Durata Max</option>
+            <option value="30">Fino a 30 min (Rapido)</option>
+            <option value="60">Fino a 60 min (1 ora)</option>
+            <option value="120">Fino a 120 min (2 ore)</option>
+            <option value="999">Oltre 2 ore (Impegnativo)</option>
+          </select>
+
+          <!-- Ordinamento -->
           <select id="sortBy" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
             <option value="name">Nome (A-Z)</option>
             <option value="rating">Voto ⭐</option>
@@ -66,14 +93,13 @@
             <span id="sortOrderIcon">▲</span>
           </button>
 
-          <!-- Toggle Vista Compatta / Standard -->
-          <button type="button" id="viewModeBtn" onclick="toggleViewMode()" title="Cambia Vista (Standard / Compatta)" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-2.5 py-2 rounded-lg font-bold text-xs active:scale-95 flex items-center justify-center shrink-0 cursor-pointer">
+          <button type="button" id="viewModeBtn" onclick="toggleViewMode()" title="Cambia Vista" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-2.5 py-2 rounded-lg font-bold text-xs active:scale-95 flex items-center justify-center shrink-0 cursor-pointer">
             <span id="viewModeIcon">🔲</span>
           </button>
         </div>
       </div>
 
-      <!-- Contatore Dinamico & Stato Filtri -->
+      <!-- Contatore Dinamico -->
       <div class="flex justify-between items-center px-1 text-xs text-slate-400 border-t border-slate-800/80 pt-2">
         <div id="statsCounter" class="font-medium">Caricamento contatore...</div>
         <div id="activeFiltersSummary" class="text-indigo-400 font-semibold"></div>
@@ -192,6 +218,17 @@
     </div>
   </div>
 
+  <!-- Statistiche Globali Modal -->
+  <div id="statsModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl my-auto space-y-4">
+      <div class="flex justify-between items-center mb-2">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">📊 Statistiche Ludoteca</h2>
+        <button type="button" onclick="closeStatsModal()" class="text-slate-400 hover:text-white text-lg font-bold cursor-pointer">✕</button>
+      </div>
+      <div id="statsContent" class="space-y-3 text-sm text-slate-300"></div>
+    </div>
+  </div>
+
   <!-- Configurazione API Key Modal -->
   <div id="apiKeyModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl my-auto">
@@ -244,6 +281,7 @@
               <option value="base">🎲 Gioco Base</option>
               <option value="expansion">🧩 Espansione Dipendente</option>
               <option value="standalone">⚡ Espansione Standalone</option>
+              <option value="wishlist">⭐ In Wishlist / Desiderato</option>
             </select>
           </div>
           <div id="parentGameGroup" class="hidden">
@@ -463,16 +501,33 @@
       return map[diff] || 2;
     }
 
+    function extractMaxPlayers(playersStr) {
+      if (!playersStr) return 99;
+      const matches = playersStr.match(/\d+/g);
+      if (!matches) return 99;
+      const nums = matches.map(Number);
+      return Math.max(...nums);
+    }
+
+    function extractMinPlayers(playersStr) {
+      if (!playersStr) return 1;
+      const matches = playersStr.match(/\d+/g);
+      if (!matches) return 1;
+      const nums = matches.map(Number);
+      return Math.min(...nums);
+    }
+
     function updateStatsCounter(totalCount, filteredCount) {
       const statsEl = document.getElementById('statsCounter');
       const filterSummaryEl = document.getElementById('activeFiltersSummary');
       if (!statsEl) return;
 
       const bases = games.filter(g => (g.itemType || 'base') === 'base').length;
-      const expansions = games.length - bases;
-      const unplayed = games.filter(g => !g.plays || g.plays === 0).length;
+      const expansions = games.filter(g => g.itemType === 'expansion' || g.itemType === 'standalone').length;
+      const wishlist = games.filter(g => g.itemType === 'wishlist').length;
+      const unplayed = games.filter(g => (!g.itemType || g.itemType !== 'wishlist') && (!g.plays || g.plays === 0)).length;
 
-      statsEl.innerHTML = `Libreria: <strong class="text-white">${games.length}</strong> tit. <span class="text-slate-500">(${bases} base, ${expansions} esp. | 🏷️ ${unplayed} mai giocati)</span>`;
+      statsEl.innerHTML = `Libreria: <strong class="text-white">${games.length - wishlist}</strong> posseduti <span class="text-slate-500">(${bases} base, ${expansions} esp., ⭐ ${wishlist} wishlist | 🏷️ ${unplayed} mai giocati)</span>`;
 
       if (filterSummaryEl) {
         if (filteredCount !== games.length) {
@@ -483,14 +538,85 @@
       }
     }
 
+    function openStatsModal() {
+      const modal = document.getElementById('statsModal');
+      const content = document.getElementById('statsContent');
+      if (!modal || !content) return;
+
+      const ownedGames = games.filter(g => g.itemType !== 'wishlist');
+      const totalPlays = ownedGames.reduce((acc, g) => acc + (g.plays || 0), 0);
+      
+      // Calcolo tempo stimato totale in ore
+      let totalMinutes = 0;
+      ownedGames.forEach(g => {
+        const avgMins = parseNumericMinutes(g.time);
+        totalMinutes += avgMins * (g.plays || 0);
+      });
+      const totalHours = (totalMinutes / 60).toFixed(1);
+
+      // Gioco più intavolato
+      let mostPlayed = ownedGames.reduce((prev, current) => (prev && (prev.plays || 0) > (current.plays || 0)) ? prev : current, null);
+
+      // Classifica globale vittorie
+      const scores = {};
+      games.forEach(g => {
+        if (g.winners) {
+          Object.entries(g.winners).forEach(([player, wins]) => {
+            scores[player] = (scores[player] || 0) + wins;
+          });
+        }
+      });
+      const sortedWinners = Object.entries(scores).sort((a, b) => b[1] - a[1]);
+      const totalWinsSum = Object.values(scores).reduce((a, b) => a + b, 0);
+
+      content.innerHTML = `
+        <div class="bg-slate-800/60 p-3 rounded-xl border border-slate-700/50 space-y-2">
+          <p>🎮 <strong>Partite Totali Registrate:</strong> <span class="text-indigo-300 font-bold">${totalPlays}</span></p>
+          <p>⏱️ <strong>Tempo Stimato al Tavolo:</strong> <span class="text-indigo-300 font-bold">${totalHours} ore</span></p>
+          <p>👑 <strong>Titolo più Intavolato:</strong> <span class="text-amber-300 font-bold">${mostPlayed && mostPlayed.plays > 0 ? `${mostPlayed.name} (${mostPlayed.plays} partite)` : 'Nessuno'}</span></p>
+        </div>
+        <div>
+          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Percentuale Vittorie Giocatori</h3>
+          <div class="space-y-1.5 max-h-40 overflow-y-auto">
+            ${sortedWinners.length === 0 ? '<p class="text-xs text-slate-500 italic">Nessuna vittoria registrata.</p>' : 
+              sortedWinners.map(([player, wins]) => {
+                const perc = totalWinsSum > 0 ? ((wins / totalWinsSum) * 100).toFixed(1) : 0;
+                return `
+                  <div class="flex justify-between items-center bg-slate-900/60 px-2.5 py-1.5 rounded-lg text-xs border border-slate-800">
+                    <span class="text-white font-semibold">${player}</span>
+                    <span class="text-amber-400 font-bold">${wins} vittorie (${perc}%)</span>
+                  </div>
+                `;
+              }).join('')
+            }
+          </div>
+        </div>
+      `;
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeStatsModal() {
+      const modal = document.getElementById('statsModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
     function renderGames() {
       const grid = document.getElementById('gamesGrid');
       const searchInput = document.getElementById('searchInput');
       const filterTypeInput = document.getElementById('filterType');
+      const filterPlayersInput = document.getElementById('filterPlayers');
+      const filterMaxTimeInput = document.getElementById('filterMaxTime');
       const sortByInput = document.getElementById('sortBy');
 
       const search = searchInput ? searchInput.value.toLowerCase() : '';
       const filterType = filterTypeInput ? filterTypeInput.value : '';
+      const filterPlayers = filterPlayersInput ? parseInt(filterPlayersInput.value) : 0;
+      const filterMaxTime = filterMaxTimeInput ? parseInt(filterMaxTimeInput.value) : 9999;
       const sortBy = sortByInput ? sortByInput.value : 'name';
 
       let filtered = games.filter(g => {
@@ -500,10 +626,21 @@
                               (g.category && g.category.toLowerCase().includes(search));
         
         const matchesType = !filterType || itemType === filterType;
+        
+        // Filtro Giocatori
+        const minP = extractMinPlayers(g.players);
+        const maxP = extractMaxPlayers(g.players);
+        const matchesPlayers = !filterPlayers || (filterPlayers >= minP && filterPlayers <= maxP);
+
+        // Filtro Durata Max
+        const avgTime = parseNumericMinutes(g.time);
+        const matchesTime = !filterMaxTime || avgTime <= filterMaxTime;
+
+        // Filtro Tag Multipli
         const gameCategory = (g.category || '').toLowerCase();
         const matchesTags = selectedTags.length === 0 || selectedTags.every(t => gameCategory.includes(t.toLowerCase()));
 
-        return matchesSearch && matchesType && matchesTags;
+        return matchesSearch && matchesType && matchesPlayers && matchesTime && matchesTags;
       });
 
       filtered.sort((a, b) => {
@@ -542,7 +679,7 @@
         const typeInfo = getTypeBadge(game.itemType || 'base');
         const attachedExpCount = games.filter(e => e.parentGameId === game.id).length;
         const hasNotes = game.comment && game.comment.trim().length > 0;
-        const isUnplayed = !game.plays || game.plays === 0;
+        const isUnplayed = (!game.itemType || game.itemType !== 'wishlist') && (!game.plays || game.plays === 0);
 
         if (isCompactView) {
           card.innerHTML = `
@@ -788,7 +925,7 @@ Struttura JSON:
       }
 
       if (!rawText) {
-        alert("Attendi qualche secondo o supera il limite di frequenza: " + (lastError || "Limite raggiunto"));
+        alert("Attendi qualche secondo: " + (lastError || "Limite momentaneo raggiunto"));
         if (btn) {
           btn.innerHTML = '<span>✨</span> Compila';
           btn.disabled = false;
@@ -841,6 +978,7 @@ Struttura JSON:
     function getTypeBadge(type) {
       if (type === 'expansion') return { label: '🧩 Espansione', class: 'bg-amber-950/80 text-amber-300 border border-amber-700/60' };
       if (type === 'standalone') return { label: '⚡ Standalone', class: 'bg-purple-950/80 text-purple-300 border border-purple-700/60' };
+      if (type === 'wishlist') return { label: '⭐ Wishlist', class: 'bg-cyan-950/80 text-cyan-300 border border-cyan-700/60' };
       return { label: '🎲 Base', class: 'bg-indigo-950/80 text-indigo-300 border border-indigo-700/60' };
     }
 
