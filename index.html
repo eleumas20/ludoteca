@@ -52,7 +52,11 @@
         </div>
         
         <div class="flex flex-wrap gap-2">
-          <!-- Filtro Tipologia -->
+          <!-- Pulsante Sistema di Votazione -->
+          <button type="button" onclick="openVotingModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md active:scale-95 cursor-pointer">
+            🗳️ Vota Serata
+          </button>
+
           <select id="filterType" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
             <option value="">Tutti i formati</option>
             <option value="base">🎲 Giochi Base</option>
@@ -61,26 +65,23 @@
             <option value="wishlist">⭐ Wishlist</option>
           </select>
 
-          <!-- Filtro Giocatori Serata -->
           <select id="filterPlayers" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
             <option value="">👥 Quanti al tavolo?</option>
-            <option value="1">1 Giocatore (Solo)</option>
+            <option value="1">1 Giocatore</option>
             <option value="2">2 Giocatori</option>
             <option value="3">3 Giocatori</option>
             <option value="4">4 Giocatori</option>
             <option value="5">5+ Giocatori</option>
           </select>
 
-          <!-- Filtro Durata Max -->
           <select id="filterMaxTime" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
             <option value="">⏱️ Durata Max</option>
-            <option value="30">Fino a 30 min (Rapido)</option>
-            <option value="60">Fino a 60 min (1 ora)</option>
-            <option value="120">Fino a 120 min (2 ore)</option>
-            <option value="999">Oltre 2 ore (Impegnativo)</option>
+            <option value="30">Fino a 30 min</option>
+            <option value="60">Fino a 60 min</option>
+            <option value="120">Fino a 120 min</option>
+            <option value="999">Oltre 2 ore</option>
           </select>
 
-          <!-- Ordinamento -->
           <select id="sortBy" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
             <option value="name">Nome (A-Z)</option>
             <option value="rating">Voto ⭐</option>
@@ -203,6 +204,30 @@
           <button type="button" onclick="editCurrentGame()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-xl text-sm font-semibold border border-slate-700 cursor-pointer">Modifica Dati</button>
           <button type="button" onclick="deleteCurrentGame()" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-4 py-2 rounded-xl text-sm font-semibold border border-rose-500/30 cursor-pointer">Elimina</button>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal Sistema di Votazione Serata -->
+  <div id="votingModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl my-auto space-y-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-lg font-bold text-white flex items-center gap-2">🗳️ Votazione Serata</h2>
+        <button type="button" onclick="closeVotingModal()" class="text-slate-400 hover:text-white text-lg font-bold cursor-pointer">✕</button>
+      </div>
+      <p class="text-xs text-slate-400">Vota i giochi che vorreste intavolare stasera. In caso di parità, l'app estrarrà a sorte il vincitore!</p>
+      
+      <div id="votingListContainer" class="space-y-2 max-h-60 overflow-y-auto"></div>
+
+      <div id="votingResultContainer" class="hidden bg-indigo-950/60 border border-indigo-800 p-3 rounded-xl text-center space-y-1">
+        <p class="text-xs text-indigo-300 uppercase font-bold">🎉 Gioco Scelto:</p>
+        <p id="votingWinnerTitle" class="text-lg font-black text-white"></p>
+        <p id="votingWinnerReason" class="text-[11px] text-slate-400 italic"></p>
+      </div>
+
+      <div class="flex gap-2 pt-2">
+        <button type="button" onclick="resetVotes()" class="px-3 py-2 bg-slate-800 text-slate-300 rounded-lg text-xs font-semibold cursor-pointer">Resetta</button>
+        <button type="button" onclick="pickVotingWinner()" class="flex-1 px-4 py-2 bg-gradient-to-r from-purple-600 to-indigo-600 text-white rounded-lg text-xs font-bold active:scale-95 cursor-pointer">🎲 Estrai Vincitore</button>
       </div>
     </div>
   </div>
@@ -380,6 +405,7 @@
     let sortAscending = true;
     let selectedTags = [];
     let isCompactView = false;
+    let voteCounts = {};
 
     const STANDARD_TAGS = [
       "Party Game",
@@ -538,6 +564,112 @@
       }
     }
 
+    // Gestione Sistema di Votazione Serata
+    function openVotingModal() {
+      const modal = document.getElementById('votingModal');
+      const container = document.getElementById('votingListContainer');
+      const resultBox = document.getElementById('votingResultContainer');
+      if (!modal || !container) return;
+
+      voteCounts = {};
+      resultBox.classList.add('hidden');
+      container.innerHTML = '';
+
+      const ownedGames = games.filter(g => g.itemType !== 'wishlist');
+      if (ownedGames.length === 0) {
+        container.innerHTML = '<p class="text-xs text-slate-500 italic text-center py-4">Nessun gioco disponibile in libreria.</p>';
+      } else {
+        ownedGames.forEach(game => {
+          voteCounts[game.id] = 0;
+          const row = document.createElement('div');
+          row.className = "flex justify-between items-center bg-slate-800/80 p-2.5 rounded-xl border border-slate-700/60";
+          row.innerHTML = `
+            <span class="text-xs font-bold text-white truncate max-w-[200px]">${game.name}</span>
+            <div class="flex items-center gap-2">
+              <span id="voteCount_${game.id}" class="text-xs font-black text-amber-400">0 voti</span>
+              <button type="button" onclick="addVote('${game.id}')" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2.5 py-1 rounded-lg font-bold active:scale-95 cursor-pointer">+ Voto</button>
+            </div>
+          `;
+          container.appendChild(row);
+        });
+      }
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeVotingModal() {
+      const modal = document.getElementById('votingModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function addVote(id) {
+      voteCounts[id] = (voteCounts[id] || 0) + 1;
+      const counterEl = document.getElementById(`voteCount_${id}`);
+      if (counterEl) {
+        counterEl.innerText = `${voteCounts[id]} ${voteCounts[id] === 1 ? 'voto' : 'voti'}`;
+      }
+    }
+
+    function resetVotes() {
+      Object.keys(voteCounts).forEach(id => {
+        voteCounts[id] = 0;
+        const counterEl = document.getElementById(`voteCount_${id}`);
+        if (counterEl) counterEl.innerText = '0 voti';
+      });
+      const resultBox = document.getElementById('votingResultContainer');
+      if (resultBox) resultBox.classList.add('hidden');
+    }
+
+    function pickVotingWinner() {
+      const entries = Object.entries(voteCounts);
+      if (entries.length === 0) return;
+
+      let maxVotes = -1;
+      let topCandidates = [];
+
+      entries.forEach(([id, votes]) => {
+        if (votes > maxVotes) {
+          maxVotes = votes;
+          topCandidates = [id];
+        } else if (votes === maxVotes) {
+          topCandidates.push(id);
+        }
+      });
+
+      let winnerId = '';
+      let reasonText = '';
+
+      if (maxVotes === 0) {
+        // Se nessuno ha votato, estrae a sorte tra tutti i giochi posseduti
+        const ownedIds = games.filter(g => g.itemType !== 'wishlist').map(g => g.id);
+        if (ownedIds.length === 0) return;
+        winnerId = ownedIds[Math.floor(Math.random() * ownedIds.length)];
+        reasonText = "(Nessun voto espresso: estratto a sorte casualmente dall'intera ludoteca!)";
+      } else if (topCandidates.length === 1) {
+        winnerId = topCandidates[0];
+        reasonText = `(Vittoria netta con ${maxVotes} voti!)`;
+      } else {
+        // C'è parità! Estrazione casuale tra i candidati a pari merito
+        winnerId = topCandidates[Math.floor(Math.random() * topCandidates.length)];
+        reasonText = `⚖️ C'era parità a ${maxVotes} voti! Estratto a sorte tra i finalisti.`;
+      }
+
+      const winnerGame = games.find(g => g.id === winnerId);
+      if (!winnerGame) return;
+
+      const resultBox = document.getElementById('votingResultContainer');
+      const titleEl = document.getElementById('votingWinnerTitle');
+      const reasonEl = document.getElementById('votingWinnerReason');
+
+      if (titleEl) titleEl.innerText = winnerGame.name;
+      if (reasonEl) reasonEl.innerText = reasonText;
+      if (resultBox) resultBox.classList.remove('hidden');
+    }
+
     function openStatsModal() {
       const modal = document.getElementById('statsModal');
       const content = document.getElementById('statsContent');
@@ -546,7 +678,6 @@
       const ownedGames = games.filter(g => g.itemType !== 'wishlist');
       const totalPlays = ownedGames.reduce((acc, g) => acc + (g.plays || 0), 0);
       
-      // Calcolo tempo stimato totale in ore
       let totalMinutes = 0;
       ownedGames.forEach(g => {
         const avgMins = parseNumericMinutes(g.time);
@@ -554,10 +685,8 @@
       });
       const totalHours = (totalMinutes / 60).toFixed(1);
 
-      // Gioco più intavolato
       let mostPlayed = ownedGames.reduce((prev, current) => (prev && (prev.plays || 0) > (current.plays || 0)) ? prev : current, null);
 
-      // Classifica globale vittorie
       const scores = {};
       games.forEach(g => {
         if (g.winners) {
@@ -625,18 +754,24 @@
                               (g.desc && g.desc.toLowerCase().includes(search)) ||
                               (g.category && g.category.toLowerCase().includes(search));
         
-        const matchesType = !filterType || itemType === filterType;
-        
-        // Filtro Giocatori
+        let matchesType = true;
+        if (filterType === 'expansion') {
+          matchesType = itemType === 'expansion';
+        } else if (filterType === 'standalone') {
+          matchesType = itemType === 'standalone';
+        } else if (filterType === 'wishlist') {
+          matchesType = itemType === 'wishlist';
+        } else if (filterType === 'base') {
+          matchesType = itemType === 'base';
+        }
+
         const minP = extractMinPlayers(g.players);
         const maxP = extractMaxPlayers(g.players);
         const matchesPlayers = !filterPlayers || (filterPlayers >= minP && filterPlayers <= maxP);
 
-        // Filtro Durata Max
         const avgTime = parseNumericMinutes(g.time);
         const matchesTime = !filterMaxTime || avgTime <= filterMaxTime;
 
-        // Filtro Tag Multipli
         const gameCategory = (g.category || '').toLowerCase();
         const matchesTags = selectedTags.length === 0 || selectedTags.every(t => gameCategory.includes(t.toLowerCase()));
 
@@ -1228,6 +1363,14 @@ Struttura JSON:
 
     function closeLeaderboardModal() {
       const modal = document.getElementById('leaderboardModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
+    function closeVotingModal() {
+      const modal = document.getElementById('votingModal');
       if (modal) {
         modal.classList.add('hidden');
         modal.classList.remove('flex');
