@@ -32,7 +32,7 @@
         <label title="Carica" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-slate-300 border border-slate-700 cursor-pointer">
           📂 Carica <input type="file" id="importInput" accept=".json" class="hidden" onchange="importData(event)">
         </label>
-        <button onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1">
+        <button type="button" onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1 cursor-pointer">
           <span>+</span> Nuovo
         </button>
       </div>
@@ -472,6 +472,7 @@
         return sortAscending ? res : -res;
       });
 
+      if (!grid) return;
       grid.innerHTML = '';
       const emptyState = document.getElementById('emptyState');
       if (emptyState) emptyState.classList.toggle('hidden', filtered.length > 0);
@@ -539,7 +540,9 @@
     }
 
     function updateGoogleSearchButton() {
-      const name = document.getElementById('formName').value.trim();
+      const nameElement = document.getElementById('formName');
+      if (!nameElement) return;
+      const name = nameElement.value.trim();
       const btn = document.getElementById('btnGoogleSearchImg');
       if (btn) {
         btn.classList.toggle('opacity-50', !name);
@@ -547,7 +550,9 @@
     }
 
     function openGoogleImageSearch() {
-      const name = document.getElementById('formName').value.trim() || document.getElementById('aiSearchInput').value.trim();
+      const nameEl = document.getElementById('formName');
+      const aiEl = document.getElementById('aiSearchInput');
+      const name = (nameEl ? nameEl.value.trim() : '') || (aiEl ? aiEl.value.trim() : '');
       if (!name) {
         alert("Digita prima il nome del gioco.");
         return;
@@ -562,8 +567,10 @@
         document.getElementById('formImageUrl').value = cleanUrl;
         document.getElementById('formImagePreview').src = cleanUrl;
         const prev = document.getElementById('previewCoverContainer');
-        prev.classList.remove('hidden');
-        prev.classList.add('flex');
+        if (prev) {
+          prev.classList.remove('hidden');
+          prev.classList.add('flex');
+        }
       }
     }
 
@@ -573,10 +580,13 @@
         const base64 = await toBase64(file);
         document.getElementById('formImageUrl').value = base64;
         document.getElementById('formImagePreview').src = base64;
-        document.getElementById('formImageUrlInput').value = '';
+        const urlInput = document.getElementById('formImageUrlInput');
+        if (urlInput) urlInput.value = '';
         const prev = document.getElementById('previewCoverContainer');
-        prev.classList.remove('hidden');
-        prev.classList.add('flex');
+        if (prev) {
+          prev.classList.remove('hidden');
+          prev.classList.add('flex');
+        }
       }
     }
 
@@ -591,8 +601,10 @@
             document.getElementById('formImageUrl').value = base64;
             document.getElementById('formImagePreview').src = base64;
             const prev = document.getElementById('previewCoverContainer');
-            prev.classList.remove('hidden');
-            prev.classList.add('flex');
+            if (prev) {
+              prev.classList.remove('hidden');
+              prev.classList.add('flex');
+            }
             break;
           }
         }
@@ -600,7 +612,9 @@
     });
 
     async function searchWithGemini() {
-      const query = document.getElementById('aiSearchInput').value.trim();
+      const queryInput = document.getElementById('aiSearchInput');
+      if (!queryInput) return;
+      const query = queryInput.value.trim();
       if (!query) return;
 
       if (!geminiApiKey) {
@@ -609,8 +623,10 @@
       }
 
       const btn = document.getElementById('btnAiSearch');
-      btn.innerText = '⏳ Cerco...';
-      btn.disabled = true;
+      if (btn) {
+        btn.innerText = '⏳ Cerco...';
+        btn.disabled = true;
+      }
 
       const systemPrompt = `Sei un esperto mondiale di giochi da tavolo ed espansioni. Analizza il titolo fornito e rispondi ESCLUSIVAMENTE con un JSON valido (senza blocchi markdown o testo extra). 
 Identifica accuratamente la tipologia:
@@ -668,8 +684,10 @@ Struttura JSON:
 
       if (!rawText) {
         alert("Attendi qualche secondo: " + (lastError || "Limite momentaneo raggiunto"));
-        btn.innerHTML = '<span>✨</span> Compila';
-        btn.disabled = false;
+        if (btn) {
+          btn.innerHTML = '<span>✨</span> Compila';
+          btn.disabled = false;
+        }
         return;
       }
 
