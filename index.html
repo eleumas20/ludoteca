@@ -9,7 +9,6 @@
     body { -webkit-tap-highlight-color: transparent; }
     .star-btn { cursor: pointer; transition: transform 0.15s; }
     .star-btn:active { transform: scale(1.3); }
-    /* Nascondi scrollbar per i tag ma mantieni lo scroll orizzontale fluido */
     .no-scrollbar::-webkit-scrollbar { display: none; }
     .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
@@ -48,7 +47,6 @@
         </div>
         
         <div class="flex gap-2">
-          <!-- Filtro Tipologia Strutturale -->
           <select id="filterType" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300">
             <option value="">Tutti i formati</option>
             <option value="base">🎲 Giochi Base</option>
@@ -56,7 +54,6 @@
             <option value="expansion">🧩 Esp. Dipendenti</option>
           </select>
 
-          <!-- Criterio di Ordinamento -->
           <select id="sortBy" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300">
             <option value="name">Nome (A-Z)</option>
             <option value="rating">Voto ⭐</option>
@@ -65,14 +62,12 @@
             <option value="difficulty">Difficoltà 🎯</option>
           </select>
 
-          <!-- Toggle Ascendente / Discendente -->
           <button type="button" id="sortOrderBtn" onclick="toggleSortOrder()" title="Inverti Ordinamento" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-indigo-300 px-3 py-2 rounded-lg font-bold text-sm active:scale-95 flex items-center justify-center shrink-0">
             <span id="sortOrderIcon">▲</span>
           </button>
         </div>
       </div>
 
-      <!-- Barra Filtro Meccaniche / Tag Multipli -->
       <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
         <span class="text-[11px] font-bold text-slate-400 shrink-0 mr-1">Filtra per genere:</span>
         <div id="tagFiltersContainer" class="flex gap-1.5"></div>
@@ -638,9 +633,9 @@ Struttura JSON:
 }`;
 
       const candidateModels = [
-        "gemini-3.5-flash",
-        "gemini-3.1-flash-lite",
-        "gemini-1.5-flash"
+        "gemini-2.5-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro"
       ];
 
       let rawText = null;
