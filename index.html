@@ -186,7 +186,7 @@
       
       <!-- Ricerca IA Universale -->
       <div class="mb-4 bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-xl relative">
-        <label class="text-xs font-bold text-indigo-300 block mb-1">✨ Ricerca Illimitata con IA (Gemini 3.6)</label>
+        <label class="text-xs font-bold text-indigo-300 block mb-1">✨ Ricerca Illimitata con IA</label>
         <div class="flex gap-2">
           <input type="text" id="aiSearchInput" onkeydown="if(event.key==='Enter'){event.preventDefault();searchWithGemini();}" placeholder="Scrivi qualsiasi gioco, espansione o variante..." class="flex-1 bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white focus:outline-none focus:border-indigo-500">
           <button type="button" id="btnAiSearch" onclick="searchWithGemini()" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs px-3 py-2 rounded-lg font-bold whitespace-nowrap active:scale-95 flex items-center gap-1">
@@ -281,7 +281,7 @@
 
         <div class="flex justify-end gap-2 pt-2">
           <button type="button" onclick="closeFormModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm font-semibold">Annulla</button>
-          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-bold">Salva</button>
+          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-bold active:scale-95">Salva</button>
         </div>
       </form>
     </div>
@@ -321,10 +321,12 @@
     }
 
     function toggleParentGameSelector() {
-      const type = document.getElementById('formItemType').value;
+      const typeEl = document.getElementById('formItemType');
       const group = document.getElementById('parentGameGroup');
       const select = document.getElementById('formParentGameId');
+      if (!typeEl || !group || !select) return;
 
+      const type = typeEl.value;
       if (type === 'expansion') {
         const currentEditId = document.getElementById('gameId').value;
         const baseGames = games.filter(g => (g.itemType || 'base') === 'base' && g.id !== currentEditId);
@@ -337,7 +339,6 @@
       }
     }
 
-    // Generatore di copertina tematica vettoriale dinamica (fallback ad alta risoluzione)
     function generateThemedCoverSVG(title, type) {
       const isExp = type === 'expansion';
       const isSta = type === 'standalone';
@@ -369,7 +370,6 @@
       return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
     }
 
-    // Ricerca robusta copertina online con query multiple
     async function fetchCoverOnline(gameName) {
       const queries = [
         gameName.trim(),
@@ -379,7 +379,6 @@
 
       for (const q of queries) {
         try {
-          // Ricerca su Wikipedia IT
           let res = await fetch(`https://it.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=1&prop=pageimages&pithumbsize=600&format=json&origin=*`);
           let data = await res.json();
           let pages = data.query?.pages;
@@ -388,7 +387,6 @@
             if (first?.thumbnail?.source) return first.thumbnail.source;
           }
 
-          // Ricerca su Wikipedia EN
           res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=1&prop=pageimages&pithumbsize=600&format=json&origin=*`);
           data = await res.json();
           pages = data.query?.pages;
@@ -396,14 +394,11 @@
             let first = Object.values(pages)[0];
             if (first?.thumbnail?.source) return first.thumbnail.source;
           }
-        } catch (e) {
-          // Continua con la query successiva
-        }
+        } catch (e) {}
       }
       return null;
     }
 
-    // Ricerca IA con Gemini 3.6
     async function searchWithGemini() {
       const query = document.getElementById('aiSearchInput').value.trim();
       if (!query) return;
@@ -435,493 +430,46 @@ Struttura JSON:
   "desc": "Descrizione sintetica in 2-3 frasi in italiano delle meccaniche e del contenuto."
 }`;
 
-      try {
-        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-3.6-flash:generateContent?key=${geminiApiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{
-              parts: [{ text: `${systemPrompt}\n\nTitolo cercato: "${query}"` }]
-            }]
-          })
-        });
+      const candidateModels = [
+        "gemini-3.6-flash",
+        "gemini-1.5-flash",
+        "gemini-1.5-pro"
+      ];
 
-        if (!response.ok) {
-          const errData = await response.json();
-          throw new Error(errData.error?.message || "Errore chiamata API Gemini");
-        }
+      let rawText = null;
+      let lastError = null;
 
-        const data = await response.json();
-        let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-        rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const gameData = JSON.parse(rawText);
+      for (const modelName of candidateModels) {
+        try {
+          const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${modelName}:generateContent?key=${geminiApiKey}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{
+                parts: [{ text: `${systemPrompt}\n\nTitolo cercato: "${query}"` }]
+              }]
+            })
+          });
 
-        const finalName = gameData.name || query;
-        document.getElementById('formName').value = finalName;
-        document.getElementById('formCategory').value = gameData.category || 'Tavolo / Strategia';
-        document.getElementById('formDifficulty').value = ['Facile','Normale','Difficile','Estrema'].includes(gameData.difficulty) ? gameData.difficulty : 'Normale';
-        document.getElementById('formPlayers').value = gameData.players || '2-4 Giocatori';
-        document.getElementById('formTime').value = gameData.time || '45-60 min';
-        document.getElementById('formDesc').value = gameData.desc || '';
-
-        const detectedType = ['base', 'expansion', 'standalone'].includes(gameData.itemType) ? gameData.itemType : 'base';
-        document.getElementById('formItemType').value = detectedType;
-        toggleParentGameSelector();
-
-        if (detectedType === 'expansion' && gameData.parentGameName) {
-          const matchedParent = games.find(g => (g.itemType || 'base') === 'base' && g.name.toLowerCase().includes(gameData.parentGameName.toLowerCase()));
-          if (matchedParent) {
-            document.getElementById('formParentGameId').value = matchedParent.id;
+          if (response.ok) {
+            const data = await response.json();
+            rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+            if (rawText) break;
+          } else {
+            const errData = await response.json();
+            lastError = errData.error?.message || `HTTP ${response.status}`;
           }
+        } catch (err) {
+          lastError = err.message;
         }
+      }
 
-        // Recupero copertina o generazione copertina tematica
-        const onlineCover = await fetchCoverOnline(finalName);
-        const finalCover = onlineCover || generateThemedCoverSVG(finalName, detectedType);
-
-        document.getElementById('formImageUrl').value = finalCover;
-        document.getElementById('formImagePreview').src = finalCover;
-        document.getElementById('coverSourceLabel').innerText = onlineCover ? "Copertina Web ufficiale" : "Grafica Tematica Vettoriale";
-        document.getElementById('previewCoverContainer').classList.remove('hidden');
-        document.getElementById('previewCoverContainer').classList.add('flex');
-
-      } catch (err) {
-        alert("Errore durante l'elaborazione IA: " + err.message);
-      } finally {
+      if (!rawText) {
+        alert("Attendi qualche secondo: " + (lastError || "Limite momentaneo raggiunto"));
         btn.innerHTML = '<span>✨</span> Compila';
         btn.disabled = false;
-      }
-    }
-
-    function getDifficultyBadge(diff) {
-      if (diff === 'Facile') return 'bg-emerald-950 text-emerald-300 border border-emerald-800';
-      if (diff === 'Difficile') return 'bg-amber-950 text-amber-300 border border-amber-800';
-      if (diff === 'Estrema') return 'bg-rose-950 text-rose-300 border border-rose-800';
-      return 'bg-blue-950 text-blue-300 border border-blue-800';
-    }
-
-    function getTypeBadge(type) {
-      if (type === 'expansion') return { label: '🧩 Espansione', class: 'bg-amber-950/80 text-amber-300 border border-amber-700/60' };
-      if (type === 'standalone') return { label: '⚡ Standalone', class: 'bg-purple-950/80 text-purple-300 border border-purple-700/60' };
-      return { label: '🎲 Base', class: 'bg-indigo-950/80 text-indigo-300 border border-indigo-700/60' };
-    }
-
-    function renderGames() {
-      const grid = document.getElementById('gamesGrid');
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const filterType = document.getElementById('filterType').value;
-      const sortBy = document.getElementById('sortBy').value;
-
-      let filtered = games.filter(g => {
-        const itemType = g.itemType || 'base';
-        const matchesSearch = g.name.toLowerCase().includes(search) || (g.desc && g.desc.toLowerCase().includes(search));
-        const matchesType = !filterType || itemType === filterType;
-        return matchesSearch && matchesType;
-      });
-
-      filtered.sort((a, b) => {
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        if (sortBy === 'rating') return b.rating - a.rating;
-        if (sortBy === 'plays') return (b.plays || 0) - (a.plays || 0);
-      });
-
-      grid.innerHTML = '';
-      document.getElementById('emptyState').classList.toggle('hidden', filtered.length > 0);
-
-      filtered.forEach(game => {
-        const card = document.createElement('div');
-        card.className = "group bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-md hover:border-slate-700 transition cursor-pointer flex flex-col active:scale-95";
-        card.onclick = () => openDetailModal(game.id);
-
-        const totalWins = game.winners ? Object.values(game.winners).reduce((a, b) => a + b, 0) : 0;
-        const typeInfo = getTypeBadge(game.itemType || 'base');
-        const attachedExpCount = games.filter(e => e.parentGameId === game.id).length;
-        const coverSrc = game.image || generateThemedCoverSVG(game.name, game.itemType || 'base');
-
-        card.innerHTML = `
-          <div class="relative aspect-square bg-slate-800 overflow-hidden flex items-center justify-center">
-            <img referrerpolicy="no-referrer" src="${coverSrc}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="${game.name}">
-            <div class="absolute top-2 right-2 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded text-[11px] font-bold text-amber-400">
-              ⭐ ${game.rating}
-            </div>
-            <div class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9px] font-bold ${typeInfo.class}">
-              ${typeInfo.label}
-            </div>
-            ${game.difficulty ? `<div class="absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${getDifficultyBadge(game.difficulty)}">${game.difficulty}</div>` : ''}
-          </div>
-          <div class="p-3 flex flex-col flex-1 justify-between">
-            <div>
-              <h3 class="font-bold text-sm text-white truncate">${game.name}</h3>
-              <p class="text-[11px] text-slate-400 truncate">${game.category || 'Generico'}</p>
-              ${attachedExpCount > 0 ? `<span class="inline-block mt-1 text-[10px] bg-indigo-900/50 text-indigo-300 px-1.5 py-0.5 rounded font-semibold border border-indigo-700/50">+${attachedExpCount} Espansioni</span>` : ''}
-            </div>
-            <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-              <span>🎮 ${game.plays || 0}</span>
-              <span>🏆 ${totalWins}</span>
-            </div>
-          </div>
-        `;
-        grid.appendChild(card);
-      });
-    }
-
-    function clearCoverPreview() {
-      document.getElementById('formImageUrl').value = '';
-      document.getElementById('previewCoverContainer').classList.add('hidden');
-      document.getElementById('previewCoverContainer').classList.remove('flex');
-    }
-
-    function openDetailModal(id) {
-      const game = games.find(g => g.id === id);
-      if (!game) return;
-      currentSelectedId = id;
-      if (!game.winners) game.winners = {};
-
-      const itemType = game.itemType || 'base';
-      const typeInfo = getTypeBadge(itemType);
-
-      document.getElementById('detailTitle').innerText = game.name;
-      document.getElementById('detailCategory').innerText = game.category || 'Generico';
-      
-      const typeBadgeEl = document.getElementById('detailTypeBadge');
-      typeBadgeEl.innerText = typeInfo.label;
-      typeBadgeEl.className = `text-xs font-semibold px-2 py-0.5 rounded-md ${typeInfo.class}`;
-
-      const parentIndicator = document.getElementById('detailParentGameIndicator');
-      if (itemType === 'expansion' && game.parentGameId) {
-        const parent = games.find(g => g.id === game.parentGameId);
-        if (parent) {
-          parentIndicator.innerText = `Richiede il gioco base: "${parent.name}"`;
-          parentIndicator.classList.remove('hidden');
-        } else {
-          parentIndicator.classList.add('hidden');
-        }
-      } else {
-        parentIndicator.classList.add('hidden');
-      }
-
-      const expContainer = document.getElementById('detailExpansionsContainer');
-      const expList = document.getElementById('detailExpansionsList');
-      const attachedExpansions = games.filter(e => e.parentGameId === game.id);
-
-      if (itemType === 'base' && attachedExpansions.length > 0) {
-        document.getElementById('detailExpansionsCount').innerText = attachedExpansions.length;
-        expList.innerHTML = attachedExpansions.map(exp => `
-          <div onclick="openDetailModal('${exp.id}')" class="flex justify-between items-center bg-slate-900/80 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer hover:bg-slate-700 transition border border-slate-700/50">
-            <span class="font-bold text-white">${exp.name}</span>
-            <span class="text-amber-400 font-semibold">⭐ ${exp.rating || 5} ➔</span>
-          </div>
-        `).join('');
-        expContainer.classList.remove('hidden');
-      } else {
-        expContainer.classList.add('hidden');
-      }
-
-      const diffEl = document.getElementById('detailDifficulty');
-      if (game.difficulty) {
-        diffEl.innerText = game.difficulty;
-        diffEl.className = `text-xs font-semibold px-2 py-0.5 rounded-md ${getDifficultyBadge(game.difficulty)}`;
-        diffEl.classList.remove('hidden');
-      } else {
-        diffEl.classList.add('hidden');
-      }
-
-      document.getElementById('detailPlayersTime').innerText = `👥 ${game.players || 'N/D'} | ⏱️ ${game.time || 'N/D'}`;
-      document.getElementById('detailImg').src = game.image || generateThemedCoverSVG(game.name, itemType);
-      document.getElementById('detailPlays').innerText = game.plays || 0;
-      document.getElementById('detailDesc').innerText = game.desc || 'Nessuna descrizione presente.';
-      document.getElementById('detailCommentInput').value = game.comment || '';
-
-      renderDetailRatingStars(game.rating || 5);
-      renderGameLeaderboard(game);
-
-      document.getElementById('detailModal').classList.remove('hidden');
-      document.getElementById('detailModal').classList.add('flex');
-    }
-
-    function renderDetailRatingStars(rating) {
-      const container = document.getElementById('detailStars');
-      container.innerHTML = '';
-      for (let i = 1; i <= 5; i++) {
-        const span = document.createElement('span');
-        span.innerText = '★';
-        span.className = `star-btn ${i <= rating ? 'text-amber-400' : 'text-slate-600'}`;
-        span.onclick = () => {
-          const game = games.find(g => g.id === currentSelectedId);
-          if (!game) return;
-          game.rating = i;
-          renderDetailRatingStars(i);
-          saveToStorage();
-        };
-        container.appendChild(span);
-      }
-    }
-
-    function saveCommentDirectly() {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      game.comment = document.getElementById('detailCommentInput').value;
-      localStorage.setItem('boardgames_db', JSON.stringify(games));
-      
-      const ind = document.getElementById('commentSaveIndicator');
-      ind.classList.remove('hidden');
-      setTimeout(() => ind.classList.add('hidden'), 1500);
-    }
-
-    function adjustPlays(delta) {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      game.plays = Math.max(0, (game.plays || 0) + delta);
-      document.getElementById('detailPlays').innerText = game.plays;
-      saveToStorage();
-    }
-
-    function addWinnerScore() {
-      const input = document.getElementById('winnerNameInput');
-      const name = input.value.trim();
-      if (!name) return;
-
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      if (!game.winners) game.winners = {};
-
-      game.winners[name] = (game.winners[name] || 0) + 1;
-      game.plays = (game.plays || 0) + 1;
-      document.getElementById('detailPlays').innerText = game.plays;
-      input.value = '';
-
-      renderGameLeaderboard(game);
-      saveToStorage();
-    }
-
-    function renderGameLeaderboard(game) {
-      const list = document.getElementById('gameLeaderboardList');
-      list.innerHTML = '';
-      const entries = Object.entries(game.winners || {}).sort((a, b) => b[1] - a[1]);
-
-      if (entries.length === 0) {
-        list.innerHTML = '<span class="text-xs text-slate-500 italic">Nessuna vittoria registrata.</span>';
         return;
       }
 
-      entries.forEach(([player, wins], idx) => {
-        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '👤';
-        const row = document.createElement('div');
-        row.className = "flex justify-between items-center bg-slate-900/60 px-2.5 py-1 rounded-lg text-xs border border-slate-800";
-        row.innerHTML = `
-          <span class="text-slate-300 font-medium">${medal} ${player}</span>
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-amber-400">${wins} ${wins === 1 ? 'vittoria' : 'vittorie'}</span>
-            <button onclick="removeWin('${player}')" class="text-[10px] text-slate-500 hover:text-rose-400 px-1 font-bold">✕</button>
-          </div>
-        `;
-        list.appendChild(row);
-      });
-    }
-
-    function removeWin(player) {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game || !game.winners || !game.winners[player]) return;
-      game.winners[player]--;
-      if (game.winners[player] <= 0) delete game.winners[player];
-      renderGameLeaderboard(game);
-      saveToStorage();
-    }
-
-    function openLeaderboardModal() {
-      const container = document.getElementById('globalLeaderboardList');
-      container.innerHTML = '';
-
-      const scores = {};
-      games.forEach(g => {
-        if (g.winners) {
-          Object.entries(g.winners).forEach(([player, wins]) => {
-            scores[player] = (scores[player] || 0) + wins;
-          });
-        }
-      });
-
-      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-
-      if (sorted.length === 0) {
-        container.innerHTML = '<div class="text-center py-6 text-slate-500 text-sm">Nessuna vittoria registrata nei giochi.</div>';
-      } else {
-        sorted.forEach(([player, wins], idx) => {
-          const medal = idx === 0 ? '🥇 1°' : idx === 1 ? '🥈 2°' : idx === 2 ? '🥉 3°' : `${idx + 1}°`;
-          const item = document.createElement('div');
-          item.className = "flex justify-between items-center bg-slate-800/80 p-3 rounded-xl border border-slate-700/60";
-          item.innerHTML = `
-            <div class="flex items-center gap-2">
-              <span class="font-black text-xs px-2 py-0.5 bg-slate-900 rounded-md text-amber-300">${medal}</span>
-              <span class="font-bold text-white text-sm">${player}</span>
-            </div>
-            <span class="text-sm font-black text-amber-400">${wins} 🏆</span>
-          `;
-          container.appendChild(item);
-        });
-      }
-
-      document.getElementById('leaderboardModal').classList.remove('hidden');
-      document.getElementById('leaderboardModal').classList.add('flex');
-    }
-
-    function closeLeaderboardModal() {
-      document.getElementById('leaderboardModal').classList.add('hidden');
-      document.getElementById('leaderboardModal').classList.remove('flex');
-    }
-
-    function closeDetailModal() {
-      document.getElementById('detailModal').classList.add('hidden');
-      document.getElementById('detailModal').classList.remove('flex');
-    }
-
-    function openModal(isEdit = false) {
-      document.getElementById('formModal').classList.remove('hidden');
-      document.getElementById('formModal').classList.add('flex');
-      
-      if (!isEdit) {
-        document.getElementById('gameForm').reset();
-        document.getElementById('gameId').value = '';
-        document.getElementById('formImageUrl').value = '';
-        document.getElementById('aiSearchInput').value = '';
-        document.getElementById('formItemType').value = 'base';
-        toggleParentGameSelector();
-        clearCoverPreview();
-        document.getElementById('formTitle').innerText = 'Aggiungi Gioco';
-        setFormRating(5);
-      }
-    }
-
-    function closeFormModal() {
-      document.getElementById('formModal').classList.add('hidden');
-      document.getElementById('formModal').classList.remove('flex');
-    }
-
-    function setFormRating(val) {
-      document.getElementById('formRating').value = val;
-      const stars = document.getElementById('starPicker').children;
-      for (let i = 0; i < 5; i++) {
-        stars[i].className = i < val ? 'star-btn text-amber-400' : 'star-btn text-slate-600';
-      }
-    }
-
-    function editCurrentGame() {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      closeDetailModal();
-      openModal(true);
-
-      document.getElementById('formTitle').innerText = 'Modifica Gioco';
-      document.getElementById('gameId').value = game.id;
-      document.getElementById('aiSearchInput').value = game.name;
-      document.getElementById('formName').value = game.name;
-      document.getElementById('formItemType').value = game.itemType || 'base';
-      toggleParentGameSelector();
-      if (game.parentGameId) document.getElementById('formParentGameId').value = game.parentGameId;
-
-      document.getElementById('formCategory').value = game.category || '';
-      document.getElementById('formDifficulty').value = game.difficulty || 'Normale';
-      document.getElementById('formPlayers').value = game.players || '';
-      document.getElementById('formTime').value = game.time || '';
-      document.getElementById('formDesc').value = game.desc || '';
-      
-      if (game.image) {
-        document.getElementById('formImageUrl').value = game.image;
-        document.getElementById('formImagePreview').src = game.image;
-        document.getElementById('coverSourceLabel').innerText = "Immagine salvata";
-        document.getElementById('previewCoverContainer').classList.remove('hidden');
-        document.getElementById('previewCoverContainer').classList.add('flex');
-      } else {
-        clearCoverPreview();
-      }
-
-      setFormRating(game.rating || 5);
-    }
-
-    function deleteCurrentGame() {
-      if (!confirm('Vuoi davvero eliminare questo gioco?')) return;
-      games = games.filter(g => g.id !== currentSelectedId);
-      games.forEach(g => {
-        if (g.parentGameId === currentSelectedId) g.parentGameId = null;
-      });
-      saveToStorage();
-      closeDetailModal();
-    }
-
-    async function saveGame(e) {
-      e.preventDefault();
-      const id = document.getElementById('gameId').value || Date.now().toString();
-      const fileInput = document.getElementById('formImageFile');
-      let imgData = document.getElementById('formImageUrl').value;
-
-      if (fileInput.files && fileInput.files[0]) {
-        imgData = await toBase64(fileInput.files[0]);
-      }
-
-      const existingGame = games.find(g => g.id === id);
-      const itemType = document.getElementById('formItemType').value;
-      const parentGameId = itemType === 'expansion' ? document.getElementById('formParentGameId').value : null;
-
-      const gameObj = {
-        id: id,
-        name: document.getElementById('formName').value,
-        itemType: itemType,
-        parentGameId: parentGameId,
-        category: document.getElementById('formCategory').value,
-        difficulty: document.getElementById('formDifficulty').value,
-        players: document.getElementById('formPlayers').value,
-        time: document.getElementById('formTime').value,
-        rating: parseInt(document.getElementById('formRating').value),
-        plays: existingGame ? existingGame.plays : 0,
-        winners: existingGame ? existingGame.winners : {},
-        desc: document.getElementById('formDesc').value,
-        comment: existingGame ? existingGame.comment : '',
-        image: imgData
-      };
-
-      const idx = games.findIndex(g => g.id === id);
-      if (idx >= 0) games[idx] = gameObj;
-      else games.push(gameObj);
-
-      saveToStorage();
-      closeFormModal();
-      if (currentSelectedId === id) openDetailModal(id);
-    }
-
-    const toBase64 = file => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-
-    function exportData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(games));
-      const a = document.createElement('a');
-      a.href = dataStr;
-      a.download = "ludoteca_backup.json";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-
-    function importData(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        try {
-          games = JSON.parse(event.target.result);
-          saveToStorage();
-          alert('Dati importati con successo!');
-        } catch (err) {
-          alert('File JSON non valido.');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    renderGames();
-  </script>
-</body>
-</html>
+      try {
+        rawText = rawText.replace(/```json/g, '').replace(/
