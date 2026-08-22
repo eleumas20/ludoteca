@@ -239,12 +239,15 @@
     let games = JSON.parse(localStorage.getItem('boardgames_db')) || [];
     let currentSelectedId = null;
 
-    async function queryBGG(endpoint) {
-      const bggTarget = `https://boardgamegeek.com/xmlapi2/${endpoint}`;
+   async function queryBGG(endpoint) {
+      const bggTarget = `https://api.geekdo.com/xmlapi2/${endpoint}`;
       const url = `${MY_WORKER_URL}?url=${encodeURIComponent(bggTarget)}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error("Status: " + res.status);
+      if (!res.ok) throw new Error("Status " + res.status);
       const text = await res.text();
+      if (!text || !text.includes("<items") && !text.includes("<boardgames")) {
+        console.warn("BGG Response:", text);
+      }
       return new DOMParser().parseFromString(text, "text/xml");
     }
 
