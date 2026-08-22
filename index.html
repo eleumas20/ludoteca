@@ -352,14 +352,19 @@
     }
 
     function openApiKeyModal() {
+      const modal = document.getElementById('apiKeyModal');
+      if (!modal) return;
       document.getElementById('geminiApiKeyInput').value = geminiApiKey;
-      document.getElementById('apiKeyModal').classList.remove('hidden');
-      document.getElementById('apiKeyModal').classList.add('flex');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
     }
 
     function closeApiKeyModal() {
-      document.getElementById('apiKeyModal').classList.add('hidden');
-      document.getElementById('apiKeyModal').classList.remove('flex');
+      const modal = document.getElementById('apiKeyModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
     }
 
     function saveApiKey() {
@@ -376,8 +381,10 @@
 
     function toggleSortOrder() {
       sortAscending = !sortAscending;
-      document.getElementById('sortOrderIcon').innerText = sortAscending ? '▲' : '▼';
-      document.getElementById('sortOrderBtn').title = sortAscending ? 'Ordinamento: Crescente' : 'Ordinamento: Decrescente';
+      const icon = document.getElementById('sortOrderIcon');
+      const btn = document.getElementById('sortOrderBtn');
+      if (icon) icon.innerText = sortAscending ? '▲' : '▼';
+      if (btn) btn.title = sortAscending ? 'Ordinamento: Crescente' : 'Ordinamento: Decrescente';
       renderGames();
     }
 
@@ -648,7 +655,6 @@ Struttura JSON:
   "desc": "Descrizione sintetica in 2-3 frasi in italiano delle meccaniche e del contenuto."
 }`;
 
-      // Modelli stabili aggiornati
       const candidateModels = [
         "gemini-2.5-flash",
         "gemini-3.5-flash"
