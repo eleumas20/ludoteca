@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>I Miei Giochi da Tavolo</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Libreria leggera per generare il QR Code al volo -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
     .star-btn { cursor: pointer; transition: transform 0.15s; }
@@ -29,7 +31,11 @@
           </button>
         </div>
       </div>
-      <div class="flex gap-2 items-center">
+      <div id="headerActions" class="flex gap-2 items-center">
+        <!-- Pulsante QR Code -->
+        <button type="button" onclick="openQrModal()" title="Condividi QR Code" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-emerald-300 border border-emerald-700/60 flex items-center gap-1 cursor-pointer">
+          📱 <span class="hidden sm:inline">QR Code</span>
+        </button>
         <button type="button" onclick="openApiKeyModal()" title="Imposta Chiave IA" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-indigo-300 border border-indigo-700/60 flex items-center gap-1 cursor-pointer">
           🤖 <span class="hidden sm:inline">IA Config</span>
         </button>
@@ -37,7 +43,7 @@
         <label title="Carica" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-slate-300 border border-slate-700 cursor-pointer">
           📂 Carica <input type="file" id="importInput" accept=".json" class="hidden" onchange="importData(event)">
         </label>
-        <button type="button" onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1 cursor-pointer">
+        <button type="button" id="btnNewGame" onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1 cursor-pointer">
           <span>+</span> Nuovo
         </button>
       </div>
@@ -52,7 +58,6 @@
         </div>
         
         <div class="flex flex-wrap gap-2">
-          <!-- Pulsante Sistema di Votazione -->
           <button type="button" onclick="openVotingModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md active:scale-95 cursor-pointer">
             🗳️ Vota Serata
           </button>
@@ -100,7 +105,6 @@
         </div>
       </div>
 
-      <!-- Contatore Dinamico -->
       <div class="flex justify-between items-center px-1 text-xs text-slate-400 border-t border-slate-800/80 pt-2">
         <div id="statsCounter" class="font-medium">Caricamento contatore...</div>
         <div id="activeFiltersSummary" class="text-indigo-400 font-semibold"></div>
@@ -148,7 +152,7 @@
       <div class="p-5 space-y-4">
         <div class="flex items-center justify-between bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
           <div>
-            <span class="text-xs text-slate-400 block mb-0.5">Voto (Tocca per modificare)</span>
+            <span id="detailStarsLabel" class="text-xs text-slate-400 block mb-0.5">Voto</span>
             <div id="detailStars" class="flex gap-1 text-xl"></div>
           </div>
           <div class="text-right">
@@ -164,10 +168,10 @@
           <div id="detailExpansionsList" class="space-y-1.5"></div>
         </div>
 
-        <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 space-y-3">
+        <div id="detailPlaysSection" class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-bold text-indigo-300">🎮 Partite Giocate: <span id="detailPlays" class="text-white">0</span></span>
-            <div class="flex gap-1">
+            <div id="playButtonsGroup" class="flex gap-1">
               <button type="button" onclick="adjustPlays(1)" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold active:scale-95 cursor-pointer">+1 Partita</button>
               <button type="button" onclick="adjustPlays(-1)" class="bg-slate-700 text-slate-300 px-2 py-1 rounded-lg text-xs font-bold active:scale-95 cursor-pointer">-</button>
             </div>
@@ -177,7 +181,7 @@
             <span class="text-xs font-bold text-amber-400 block mb-1.5">🏆 Assegna Vittoria a Giocatore</span>
             <div class="flex gap-2">
               <input type="text" id="winnerNameInput" placeholder="Nome vincitore..." class="flex-1 bg-slate-900 text-xs rounded-lg px-3 py-2 border border-slate-700 text-white focus:outline-none focus:border-amber-500">
-              <button type="button" onclick="addWinnerScore()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-2 rounded-lg font-bold whitespace-nowrap active:scale-95 cursor-pointer">+ Vittoria</button>
+              <button type="button" id="btnAddWinner" onclick="addWinnerScore()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-2 rounded-lg font-bold whitespace-nowrap active:scale-95 cursor-pointer">+ Vittoria</button>
             </div>
           </div>
 
@@ -192,7 +196,7 @@
           <p id="detailDesc" class="text-sm text-slate-300 bg-slate-800/40 p-3 rounded-xl border border-slate-800 leading-relaxed max-h-36 overflow-y-auto"></p>
         </div>
 
-        <div>
+        <div id="detailCommentSection">
           <div class="flex justify-between items-center mb-1">
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Commento / Note Personali</h3>
             <span id="commentSaveIndicator" class="text-[10px] text-emerald-400 hidden">Salvato ✓</span>
@@ -200,11 +204,24 @@
           <textarea id="detailCommentInput" oninput="saveCommentDirectly()" placeholder="Scrivi qui note o strategie personali..." rows="2" class="w-full bg-slate-800 text-sm rounded-xl p-3 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"></textarea>
         </div>
 
-        <div class="flex gap-2 pt-2 border-t border-slate-800">
+        <div id="detailActionButtons" class="flex gap-2 pt-2 border-t border-slate-800">
           <button type="button" onclick="editCurrentGame()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-xl text-sm font-semibold border border-slate-700 cursor-pointer">Modifica Dati</button>
           <button type="button" onclick="deleteCurrentGame()" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-4 py-2 rounded-xl text-sm font-semibold border border-rose-500/30 cursor-pointer">Elimina</button>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Modal QR Code -->
+  <div id="qrModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
+    <div class="bg-slate-900 border border-slate-800 w-full max-w-sm rounded-2xl p-5 shadow-2xl my-auto text-center space-y-4">
+      <div class="flex justify-between items-center">
+        <h2 class="text-lg font-bold text-white">📱 QR Code Sola Visione</h2>
+        <button type="button" onclick="closeQrModal()" class="text-slate-400 hover:text-white text-lg font-bold cursor-pointer">✕</button>
+      </div>
+      <p class="text-xs text-slate-400">Inquadra questo codice con lo smartphone per aprire la ludoteca in modalità di sola visualizzazione (senza modifiche):</p>
+      <div class="bg-white p-4 rounded-xl inline-block mx-auto shadow-inner" id="qrcodeContainer"></div>
+      <p id="qrUrlText" class="text-[10px] text-indigo-400 break-all px-2"></p>
     </div>
   </div>
 
@@ -279,7 +296,6 @@
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl my-auto">
       <h2 id="formTitle" class="text-lg font-bold text-white mb-4">Aggiungi Gioco</h2>
       
-      <!-- Ricerca IA Scheda Tecnica -->
       <div class="mb-4 bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-xl">
         <label class="text-xs font-bold text-indigo-300 block mb-1">✨ Autocompila Scheda con IA</label>
         <div class="flex gap-2">
@@ -317,7 +333,6 @@
           </div>
         </div>
 
-        <!-- Sezione Gestione Copertina Reale -->
         <div class="bg-slate-950/60 p-3 rounded-xl border border-slate-800 space-y-2.5">
           <div class="flex justify-between items-center">
             <label class="text-xs font-bold text-slate-300">🖼️ Copertina Ufficiale</label>
@@ -406,6 +421,7 @@
     let selectedTags = [];
     let isCompactView = false;
     let voteCounts = {};
+    let isReadonly = false;
 
     const STANDARD_TAGS = [
       "Party Game",
@@ -421,7 +437,56 @@
       "Carte"
     ];
 
+    // Controllo se la pagina è aperta in modalità Sola Visione
+    function checkReadonlyMode() {
+      const urlParams = new URLSearchParams(window.location.search);
+      if (urlParams.get('view') === 'readonly') {
+        isReadonly = true;
+        const headerActions = document.getElementById('headerActions');
+        if (headerActions) {
+          // Lascia visibili solo i pulsanti di consultazione (es. Classifica, Stats, QR Code)
+          headerActions.innerHTML = `
+            <button type="button" onclick="openQrModal()" title="Condividi QR Code" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-emerald-300 border border-emerald-700/60 flex items-center gap-1 cursor-pointer">
+              📱 <span class="hidden sm:inline">QR Code</span>
+            </button>
+          `;
+        }
+      }
+    }
+
+    function openQrModal() {
+      const modal = document.getElementById('qrModal');
+      const container = document.getElementById('qrcodeContainer');
+      const urlText = document.getElementById('qrUrlText');
+      if (!modal || !container) return;
+
+      container.innerHTML = '';
+      const readonlyUrl = window.location.origin + window.location.pathname + '?view=readonly';
+      if (urlText) urlText.innerText = readonlyUrl;
+
+      new QRCode(container, {
+        text: readonlyUrl,
+        width: 180,
+        height: 180,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeQrModal() {
+      const modal = document.getElementById('qrModal');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
+    }
+
     function saveToStorage() {
+      if (isReadonly) return;
       try {
         localStorage.setItem('boardgames_db', JSON.stringify(games));
         renderTagFilters();
@@ -432,6 +497,7 @@
     }
 
     function openApiKeyModal() {
+      if (isReadonly) return;
       const modal = document.getElementById('apiKeyModal');
       if (!modal) return;
       document.getElementById('geminiApiKeyInput').value = geminiApiKey;
@@ -448,6 +514,7 @@
     }
 
     function saveApiKey() {
+      if (isReadonly) return;
       const val = document.getElementById('geminiApiKeyInput').value.trim();
       if (!val) {
         alert("Inserisci una chiave valida.");
@@ -564,7 +631,6 @@
       }
     }
 
-    // Gestione Sistema di Votazione Serata
     function openVotingModal() {
       const modal = document.getElementById('votingModal');
       const container = document.getElementById('votingListContainer');
@@ -644,7 +710,6 @@
       let reasonText = '';
 
       if (maxVotes === 0) {
-        // Se nessuno ha votato, estrae a sorte tra tutti i giochi posseduti
         const ownedIds = games.filter(g => g.itemType !== 'wishlist').map(g => g.id);
         if (ownedIds.length === 0) return;
         winnerId = ownedIds[Math.floor(Math.random() * ownedIds.length)];
@@ -653,7 +718,6 @@
         winnerId = topCandidates[0];
         reasonText = `(Vittoria netta con ${maxVotes} voti!)`;
       } else {
-        // C'è parità! Estrazione casuale tra i candidati a pari merito
         winnerId = topCandidates[Math.floor(Math.random() * topCandidates.length)];
         reasonText = `⚖️ C'era parità a ${maxVotes} voti! Estratto a sorte tra i finalisti.`;
       }
@@ -969,6 +1033,7 @@
     }
 
     window.addEventListener('paste', async e => {
+      if (isReadonly) return;
       const modal = document.getElementById('formModal');
       if (modal && !modal.classList.contains('hidden')) {
         const items = (e.clipboardData || e.originalEvent.clipboardData).items;
@@ -990,6 +1055,7 @@
     });
 
     async function searchWithGemini() {
+      if (isReadonly) return;
       const queryInput = document.getElementById('aiSearchInput');
       if (!queryInput) return;
       const query = queryInput.value.trim();
@@ -1026,11 +1092,7 @@ Struttura JSON:
   "desc": "Descrizione sintetica in 2-3 frasi in italiano delle meccaniche e del contenuto."
 }`;
 
-      const candidateModels = [
-        "gemini-2.5-flash",
-        "gemini-3.5-flash"
-      ];
-
+      const candidateModels = ["gemini-2.5-flash", "gemini-3.5-flash"];
       let rawText = null;
       let lastError = null;
 
@@ -1040,9 +1102,7 @@ Struttura JSON:
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              contents: [{
-                parts: [{ text: `${systemPrompt}\n\nTitolo cercato: "${query}"` }]
-              }]
+              contents: [{ parts: [{ text: `${systemPrompt}\n\nTitolo cercato: "${query}"` }] }]
             })
           });
 
@@ -1118,6 +1178,7 @@ Struttura JSON:
     }
 
     function clearCoverPreview() {
+      if (isReadonly) return;
       const urlInput = document.getElementById('formImageUrl');
       const urlInputBox = document.getElementById('formImageUrlInput');
       const fileInput = document.getElementById('formImageFile');
@@ -1212,6 +1273,18 @@ Struttura JSON:
       const commentEl = document.getElementById('detailCommentInput');
       if (commentEl) commentEl.value = game.comment || '';
 
+      // Adattamento visivo in sola visione
+      if (isReadonly) {
+        const starsLabel = document.getElementById('detailStarsLabel');
+        if (starsLabel) starsLabel.innerText = "Voto";
+        const playsSec = document.getElementById('detailPlaysSection');
+        if (playsSec) playsSec.classList.add('hidden');
+        const commSec = document.getElementById('detailCommentSection');
+        if (commSec) commSec.classList.add('hidden');
+        const actBtns = document.getElementById('detailActionButtons');
+        if (actBtns) actBtns.classList.add('hidden');
+      }
+
       renderDetailRatingStars(game.rating || 5);
       renderGameLeaderboard(game);
 
@@ -1230,18 +1303,21 @@ Struttura JSON:
         const span = document.createElement('span');
         span.innerText = '★';
         span.className = `star-btn ${i <= rating ? 'text-amber-400' : 'text-slate-600'}`;
-        span.onclick = () => {
-          const game = games.find(g => g.id === currentSelectedId);
-          if (!game) return;
-          game.rating = i;
-          renderDetailRatingStars(i);
-          saveToStorage();
-        };
+        if (!isReadonly) {
+          span.onclick = () => {
+            const game = games.find(g => g.id === currentSelectedId);
+            if (!game) return;
+            game.rating = i;
+            renderDetailRatingStars(i);
+            saveToStorage();
+          };
+        }
         container.appendChild(span);
       }
     }
 
     function saveCommentDirectly() {
+      if (isReadonly) return;
       const game = games.find(g => g.id === currentSelectedId);
       if (!game) return;
       const commentInput = document.getElementById('detailCommentInput');
@@ -1257,6 +1333,7 @@ Struttura JSON:
     }
 
     function adjustPlays(delta) {
+      if (isReadonly) return;
       const game = games.find(g => g.id === currentSelectedId);
       if (!game) return;
       game.plays = Math.max(0, (game.plays || 0) + delta);
@@ -1266,6 +1343,7 @@ Struttura JSON:
     }
 
     function addWinnerScore() {
+      if (isReadonly) return;
       const input = document.getElementById('winnerNameInput');
       if (!input) return;
       const name = input.value.trim();
@@ -1296,15 +1374,14 @@ Struttura JSON:
         return;
       }
 
-      entries.forEach(([player, wins], idx) => {
-        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '👤';
+      entries.forEach(([player, wins]) => {
         const row = document.createElement('div');
         row.className = "flex justify-between items-center bg-slate-900/60 px-2.5 py-1 rounded-lg text-xs border border-slate-800";
         row.innerHTML = `
-          <span class="text-slate-300 font-medium">${medal} ${player}</span>
+          <span class="text-slate-300 font-medium">👤 ${player}</span>
           <div class="flex items-center gap-2">
             <span class="font-bold text-amber-400">${wins} ${wins === 1 ? 'vittoria' : 'vittorie'}</span>
-            <button type="button" onclick="removeWin('${player}')" class="text-[10px] text-slate-500 hover:text-rose-400 px-1 font-bold cursor-pointer">✕</button>
+            ${!isReadonly ? `<button type="button" onclick="removeWin('${player}')" class="text-[10px] text-slate-500 hover:text-rose-400 px-1 font-bold cursor-pointer">✕</button>` : ''}
           </div>
         `;
         list.appendChild(row);
@@ -1312,6 +1389,7 @@ Struttura JSON:
     }
 
     function removeWin(player) {
+      if (isReadonly) return;
       const game = games.find(g => g.id === currentSelectedId);
       if (!game || !game.winners || !game.winners[player]) return;
       game.winners[player]--;
@@ -1369,14 +1447,6 @@ Struttura JSON:
       }
     }
 
-    function closeVotingModal() {
-      const modal = document.getElementById('votingModal');
-      if (modal) {
-        modal.classList.add('hidden');
-        modal.classList.remove('flex');
-      }
-    }
-
     function closeDetailModal() {
       const modal = document.getElementById('detailModal');
       if (modal) {
@@ -1386,6 +1456,7 @@ Struttura JSON:
     }
 
     function openModal(isEdit = false) {
+      if (isReadonly) return;
       const modal = document.getElementById('formModal');
       if (!modal) return;
       modal.classList.remove('hidden');
@@ -1415,9 +1486,10 @@ Struttura JSON:
 
     function closeFormModal() {
       const modal = document.getElementById('formModal');
-      if (!modal) return;
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
+      if (modal) {
+        modal.classList.add('hidden');
+        modal.classList.remove('flex');
+      }
     }
 
     function setFormRating(val) {
@@ -1434,6 +1506,7 @@ Struttura JSON:
     }
 
     function editCurrentGame() {
+      if (isReadonly) return;
       const game = games.find(g => g.id === currentSelectedId);
       if (!game) return;
       closeDetailModal();
@@ -1490,6 +1563,7 @@ Struttura JSON:
     }
 
     function deleteCurrentGame() {
+      if (isReadonly) return;
       if (!confirm('Vuoi davvero eliminare questo gioco?')) return;
       games = games.filter(g => g.id !== currentSelectedId);
       games.forEach(g => {
@@ -1501,6 +1575,7 @@ Struttura JSON:
 
     async function saveGame(e) {
       e.preventDefault();
+      if (isReadonly) return;
       try {
         const idField = document.getElementById('gameId');
         const id = (idField && idField.value) ? idField.value : Date.now().toString();
@@ -1571,6 +1646,7 @@ Struttura JSON:
     }
 
     function importData(e) {
+      if (isReadonly) return;
       const file = e.target.files[0];
       if (!file) return;
       const reader = new FileReader();
@@ -1587,6 +1663,7 @@ Struttura JSON:
     }
 
     document.addEventListener('DOMContentLoaded', () => {
+      checkReadonlyMode();
       renderTagFilters();
       renderGames();
     });
