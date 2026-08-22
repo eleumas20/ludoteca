@@ -43,8 +43,11 @@
         <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
       </div>
       <div class="flex gap-2">
-        <select id="filterCategory" onchange="renderGames()" class="bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300">
-          <option value="">Tutte le categorie</option>
+        <select id="filterType" onchange="renderGames()" class="bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300">
+          <option value="">Tutti i tipi</option>
+          <option value="base">🎲 Giochi Base</option>
+          <option value="standalone">⚡ Espansioni Standalone</option>
+          <option value="expansion">🧩 Espansioni Dipendenti</option>
         </select>
         <select id="sortBy" onchange="renderGames()" class="bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300">
           <option value="name">Nome (A-Z)</option>
@@ -72,15 +75,18 @@
         <img id="detailImg" referrerpolicy="no-referrer" src="" alt="Copertina" class="w-full h-full object-cover">
         <button onclick="closeDetailModal()" class="absolute top-3 right-3 bg-slate-900/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg backdrop-blur-md">✕</button>
         <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent p-4 pt-10">
-          <div class="flex gap-2">
+          <div class="flex flex-wrap gap-2 mb-1">
+            <span id="detailTypeBadge" class="text-xs font-semibold px-2 py-0.5 rounded-md"></span>
             <span id="detailCategory" class="text-xs font-semibold px-2 py-0.5 bg-indigo-600/80 text-indigo-100 rounded-md"></span>
             <span id="detailDifficulty" class="text-xs font-semibold px-2 py-0.5 rounded-md"></span>
           </div>
-          <h2 id="detailTitle" class="text-2xl font-black text-white mt-1 leading-tight"></h2>
+          <h2 id="detailTitle" class="text-2xl font-black text-white leading-tight"></h2>
+          <p id="detailParentGameIndicator" class="text-xs text-amber-300 font-semibold mt-1 hidden"></p>
         </div>
       </div>
 
       <div class="p-5 space-y-4">
+        <!-- Voto & Specifiche -->
         <div class="flex items-center justify-between bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
           <div>
             <span class="text-xs text-slate-400 block mb-0.5">Voto (Tocca per modificare)</span>
@@ -92,6 +98,15 @@
           </div>
         </div>
 
+        <!-- Sezione Espansioni Collegate al Gioco Base -->
+        <div id="detailExpansionsContainer" class="hidden bg-slate-800/60 p-3.5 rounded-xl border border-indigo-900/40">
+          <h3 class="text-xs font-bold text-indigo-300 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+            🧩 Espansioni Possedute (<span id="detailExpansionsCount">0</span>)
+          </h3>
+          <div id="detailExpansionsList" class="space-y-1.5"></div>
+        </div>
+
+        <!-- Tracciamento Partite & Vincitori -->
         <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-bold text-indigo-300">🎮 Partite Giocate: <span id="detailPlays" class="text-white">0</span></span>
@@ -152,7 +167,7 @@
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl my-auto">
       <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2">🤖 Configura Google Gemini IA</h2>
       <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-        Inserisci la tua API Key di Google AI Studio per sbloccare l'accesso istantaneo a qualsiasi gioco, variante o espansione esistente.
+        Inserisci la tua API Key gratuita di Google AI Studio per sbloccare l'accesso istantaneo a qualsiasi gioco, variante o espansione esistente.
       </p>
       <div class="space-y-3">
         <div>
@@ -174,7 +189,7 @@
       
       <!-- Ricerca IA Universale -->
       <div class="mb-4 bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-xl relative">
-        <label class="text-xs font-bold text-indigo-300 block mb-1">✨ Ricerca Illimitata con IA (Gemini 3.6)</label>
+        <label class="text-xs font-bold text-indigo-300 block mb-1">✨ Ricerca Illimitata con IA (Gemini)</label>
         <div class="flex gap-2">
           <input type="text" id="aiSearchInput" onkeydown="if(event.key==='Enter'){event.preventDefault();searchWithGemini();}" placeholder="Scrivi qualsiasi gioco, espansione o variante..." class="flex-1 bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white focus:outline-none focus:border-indigo-500">
           <button type="button" id="btnAiSearch" onclick="searchWithGemini()" class="bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white text-xs px-3 py-2 rounded-lg font-bold whitespace-nowrap active:scale-95 flex items-center gap-1">
@@ -188,14 +203,32 @@
         <input type="hidden" id="formImageUrl">
         
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Nome del Gioco *</label>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Nome del Gioco / Espansione *</label>
           <input type="text" id="formName" required class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-white">
+        </div>
+
+        <!-- Selettore Tipologia -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          <div>
+            <label class="text-xs font-semibold text-slate-400 block mb-1">Tipo Titolo *</label>
+            <select id="formItemType" onchange="toggleParentGameSelector()" class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white focus:outline-none focus:border-indigo-500">
+              <option value="base">🎲 Gioco Base</option>
+              <option value="expansion">🧩 Espansione Dipendente</option>
+              <option value="standalone">⚡ Espansione Standalone</option>
+            </select>
+          </div>
+          <div id="parentGameGroup" class="hidden">
+            <label class="text-xs font-semibold text-amber-400 block mb-1">Collega al Gioco Base:</label>
+            <select id="formParentGameId" class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-amber-500/50 text-amber-200 focus:outline-none focus:border-amber-400">
+              <option value="">-- Seleziona Gioco Base --</option>
+            </select>
+          </div>
         </div>
 
         <div id="previewCoverContainer" class="hidden items-center gap-3 p-2 bg-slate-800/60 rounded-xl border border-slate-700/60">
           <img id="formImagePreview" referrerpolicy="no-referrer" src="" class="w-12 h-12 object-cover rounded-lg">
           <div class="flex-1 min-w-0">
-            <p class="text-xs text-emerald-400 font-semibold">Copertina Caricata</p>
+            <p class="text-xs text-emerald-400 font-semibold">Copertina Riconosciuta</p>
           </div>
           <button type="button" onclick="clearCoverPreview()" class="text-xs text-slate-400 hover:text-white px-2">✕</button>
         </div>
@@ -207,7 +240,7 @@
 
         <div class="grid grid-cols-2 gap-2">
           <div>
-            <label class="text-xs font-semibold text-slate-400 block mb-1">Categoria / Tipo</label>
+            <label class="text-xs font-semibold text-slate-400 block mb-1">Categoria / Tematica</label>
             <input type="text" id="formCategory" placeholder="es. Strategia, Risorse" class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white">
           </div>
           <div>
@@ -264,7 +297,6 @@
 
     function saveToStorage() {
       localStorage.setItem('boardgames_db', JSON.stringify(games));
-      updateCategoryDropdown();
       renderGames();
     }
 
@@ -291,7 +323,40 @@
       alert("Chiave IA salvata con successo!");
     }
 
-    // Ricerca Intelligente Globale con Gemini API (Modello gemini-3.6-flash)
+    function toggleParentGameSelector() {
+      const type = document.getElementById('formItemType').value;
+      const group = document.getElementById('parentGameGroup');
+      const select = document.getElementById('formParentGameId');
+
+      if (type === 'expansion') {
+        const baseGames = games.filter(g => (g.itemType || 'base') === 'base');
+        select.innerHTML = '<option value="">-- Seleziona Gioco Base --</option>' + 
+          baseGames.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+        group.classList.remove('hidden');
+      } else {
+        group.classList.add('hidden');
+        select.value = '';
+      }
+    }
+
+    // Ricerca Immagine Reale tramite Wikimedia Open API
+    async function fetchRealCoverImage(searchQuery) {
+      try {
+        const cleanQuery = encodeURIComponent(searchQuery.trim());
+        const res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${cleanQuery}&gsrlimit=1&prop=pageimages&pithumbsize=600&format=json&origin=*`);
+        const data = await res.json();
+        const pages = data.query?.pages;
+        if (pages) {
+          const first = Object.values(pages)[0];
+          if (first?.thumbnail?.source) return first.thumbnail.source;
+        }
+      } catch (e) {
+        console.warn("Cover fetch fallback", e);
+      }
+      return null;
+    }
+
+    // Ricerca IA con Gemini 3.6
     async function searchWithGemini() {
       const query = document.getElementById('aiSearchInput').value.trim();
       if (!query) return;
@@ -305,14 +370,22 @@
       btn.innerText = '⏳ Cerco...';
       btn.disabled = true;
 
-      const systemPrompt = `Sei un esperto mondiale di giochi da tavolo ed espansioni. Analizza il titolo fornito dall'utente e rispondi ESCLUSIVAMENTE con un oggetto JSON valido (senza blocchi markdown o testo extra). Struttura esatta:
+      const systemPrompt = `Sei un esperto mondiale di giochi da tavolo ed espansioni. Analizza il titolo fornito e rispondi ESCLUSIVAMENTE con un JSON valido (senza markdown o testo extra). 
+Identifica accuratamente la tipologia:
+- "base" se è un gioco base autonomo;
+- "expansion" se è un'espansione che richiede obbligatoriamente il gioco base;
+- "standalone" se è un'espansione/spin-off giocabile anche da sola senza il gioco base.
+
+Struttura JSON:
 {
-  "name": "Nome ufficiale in italiano o originale",
-  "category": "Categorie principali (es. Strategia, Risorse / Espansione)",
+  "name": "Nome ufficiale completo",
+  "itemType": "uno tra: base, expansion, standalone",
+  "parentGameName": "Nome del gioco base necessario (solo se itemType è expansion, altrimenti stringa vuota)",
+  "category": "Categorie principali (es. Strategia, Carte)",
   "difficulty": "Uno tra: Facile, Normale, Difficile, Estrema",
   "players": "es. 2-4 Giocatori",
   "time": "es. 60-90 min",
-  "desc": "Sintesi chiara in 2-3 frasi in italiano delle meccaniche e dello scopo del gioco."
+  "desc": "Descrizione sintetica in 2-3 frasi in italiano delle meccaniche e del contenuto."
 }`;
 
       try {
@@ -333,401 +406,4 @@
 
         const data = await response.json();
         let rawText = data.candidates?.[0]?.content?.parts?.[0]?.text || '{}';
-        rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const gameData = JSON.parse(rawText);
-
-        document.getElementById('formName').value = gameData.name || query;
-        document.getElementById('formCategory').value = gameData.category || 'Tavolo / Strategia';
-        document.getElementById('formDifficulty').value = ['Facile','Normale','Difficile','Estrema'].includes(gameData.difficulty) ? gameData.difficulty : 'Normale';
-        document.getElementById('formPlayers').value = gameData.players || '2-4 Giocatori';
-        document.getElementById('formTime').value = gameData.time || '45-60 min';
-        document.getElementById('formDesc').value = gameData.desc || '';
-
-        const autoCover = `https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=600&auto=format&fit=crop&q=80`;
-        document.getElementById('formImageUrl').value = autoCover;
-        document.getElementById('formImagePreview').src = autoCover;
-        document.getElementById('previewCoverContainer').classList.remove('hidden');
-        document.getElementById('previewCoverContainer').classList.add('flex');
-
-      } catch (err) {
-        alert("Errore durante l'elaborazione IA: " + err.message);
-      } finally {
-        btn.innerHTML = '<span>✨</span> Compila';
-        btn.disabled = false;
-      }
-    }
-
-    function getDifficultyBadge(diff) {
-      if (diff === 'Facile') return 'bg-emerald-950 text-emerald-300 border border-emerald-800';
-      if (diff === 'Difficile') return 'bg-amber-950 text-amber-300 border border-amber-800';
-      if (diff === 'Estrema') return 'bg-rose-950 text-rose-300 border border-rose-800';
-      return 'bg-blue-950 text-blue-300 border border-blue-800';
-    }
-
-    function renderGames() {
-      const grid = document.getElementById('gamesGrid');
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const filterCat = document.getElementById('filterCategory').value;
-      const sortBy = document.getElementById('sortBy').value;
-
-      let filtered = games.filter(g => {
-        const matchesSearch = g.name.toLowerCase().includes(search) || (g.desc && g.desc.toLowerCase().includes(search));
-        const matchesCat = !filterCat || g.category === filterCat;
-        return matchesSearch && matchesCat;
-      });
-
-      filtered.sort((a, b) => {
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        if (sortBy === 'rating') return b.rating - a.rating;
-        if (sortBy === 'plays') return (b.plays || 0) - (a.plays || 0);
-      });
-
-      grid.innerHTML = '';
-      document.getElementById('emptyState').classList.toggle('hidden', filtered.length > 0);
-
-      filtered.forEach(game => {
-        const card = document.createElement('div');
-        card.className = "group bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-md hover:border-slate-700 transition cursor-pointer flex flex-col active:scale-95";
-        card.onclick = () => openDetailModal(game.id);
-
-        const totalWins = game.winners ? Object.values(game.winners).reduce((a, b) => a + b, 0) : 0;
-
-        card.innerHTML = `
-          <div class="relative aspect-square bg-slate-800 overflow-hidden">
-            <img referrerpolicy="no-referrer" src="${game.image || 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=600&auto=format&fit=crop&q=80'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="${game.name}">
-            <div class="absolute top-2 right-2 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded text-[11px] font-bold text-amber-400">
-              ⭐ ${game.rating}
-            </div>
-            ${game.difficulty ? `<div class="absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${getDifficultyBadge(game.difficulty)}">${game.difficulty}</div>` : ''}
-          </div>
-          <div class="p-3 flex flex-col flex-1 justify-between">
-            <div>
-              <h3 class="font-bold text-sm text-white truncate">${game.name}</h3>
-              <p class="text-[11px] text-slate-400 truncate">${game.category || 'Generico'}</p>
-            </div>
-            <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-              <span>🎮 ${game.plays || 0}</span>
-              <span>🏆 ${totalWins}</span>
-            </div>
-          </div>
-        `;
-        grid.appendChild(card);
-      });
-    }
-
-    function updateCategoryDropdown() {
-      const select = document.getElementById('filterCategory');
-      const cats = [...new Set(games.map(g => g.category).filter(Boolean))];
-      select.innerHTML = '<option value="">Tutte le categorie</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
-    }
-
-    function clearCoverPreview() {
-      document.getElementById('formImageUrl').value = '';
-      document.getElementById('previewCoverContainer').classList.add('hidden');
-      document.getElementById('previewCoverContainer').classList.remove('flex');
-    }
-
-    function openDetailModal(id) {
-      const game = games.find(g => g.id === id);
-      if (!game) return;
-      currentSelectedId = id;
-      if (!game.winners) game.winners = {};
-
-      document.getElementById('detailTitle').innerText = game.name;
-      document.getElementById('detailCategory').innerText = game.category || 'Generico';
-      
-      const diffEl = document.getElementById('detailDifficulty');
-      if (game.difficulty) {
-        diffEl.innerText = game.difficulty;
-        diffEl.className = `text-xs font-semibold px-2 py-0.5 rounded-md ${getDifficultyBadge(game.difficulty)}`;
-        diffEl.classList.remove('hidden');
-      } else {
-        diffEl.classList.add('hidden');
-      }
-
-      document.getElementById('detailPlayersTime').innerText = `👥 ${game.players || 'N/D'} | ⏱️ ${game.time || 'N/D'}`;
-      document.getElementById('detailImg').src = game.image || 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=600&auto=format&fit=crop&q=80';
-      document.getElementById('detailPlays').innerText = game.plays || 0;
-      document.getElementById('detailDesc').innerText = game.desc || 'Nessuna descrizione presente.';
-      document.getElementById('detailCommentInput').value = game.comment || '';
-
-      renderDetailRatingStars(game.rating || 5);
-      renderGameLeaderboard(game);
-
-      document.getElementById('detailModal').classList.remove('hidden');
-      document.getElementById('detailModal').classList.add('flex');
-    }
-
-    function renderDetailRatingStars(rating) {
-      const container = document.getElementById('detailStars');
-      container.innerHTML = '';
-      for (let i = 1; i <= 5; i++) {
-        const span = document.createElement('span');
-        span.innerText = '★';
-        span.className = `star-btn ${i <= rating ? 'text-amber-400' : 'text-slate-600'}`;
-        span.onclick = () => {
-          const game = games.find(g => g.id === currentSelectedId);
-          if (!game) return;
-          game.rating = i;
-          renderDetailRatingStars(i);
-          saveToStorage();
-        };
-        container.appendChild(span);
-      }
-    }
-
-    function saveCommentDirectly() {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      game.comment = document.getElementById('detailCommentInput').value;
-      localStorage.setItem('boardgames_db', JSON.stringify(games));
-      
-      const ind = document.getElementById('commentSaveIndicator');
-      ind.classList.remove('hidden');
-      setTimeout(() => ind.classList.add('hidden'), 1500);
-    }
-
-    function adjustPlays(delta) {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      game.plays = Math.max(0, (game.plays || 0) + delta);
-      document.getElementById('detailPlays').innerText = game.plays;
-      saveToStorage();
-    }
-
-    function addWinnerScore() {
-      const input = document.getElementById('winnerNameInput');
-      const name = input.value.trim();
-      if (!name) return;
-
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      if (!game.winners) game.winners = {};
-
-      game.winners[name] = (game.winners[name] || 0) + 1;
-      game.plays = (game.plays || 0) + 1;
-      document.getElementById('detailPlays').innerText = game.plays;
-      input.value = '';
-
-      renderGameLeaderboard(game);
-      saveToStorage();
-    }
-
-    function renderGameLeaderboard(game) {
-      const list = document.getElementById('gameLeaderboardList');
-      list.innerHTML = '';
-      const entries = Object.entries(game.winners || {}).sort((a, b) => b[1] - a[1]);
-
-      if (entries.length === 0) {
-        list.innerHTML = '<span class="text-xs text-slate-500 italic">Nessuna vittoria registrata.</span>';
-        return;
-      }
-
-      entries.forEach(([player, wins], idx) => {
-        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '👤';
-        const row = document.createElement('div');
-        row.className = "flex justify-between items-center bg-slate-900/60 px-2.5 py-1 rounded-lg text-xs border border-slate-800";
-        row.innerHTML = `
-          <span class="text-slate-300 font-medium">${medal} ${player}</span>
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-amber-400">${wins} ${wins === 1 ? 'vittoria' : 'vittorie'}</span>
-            <button onclick="removeWin('${player}')" class="text-[10px] text-slate-500 hover:text-rose-400 px-1 font-bold">✕</button>
-          </div>
-        `;
-        list.appendChild(row);
-      });
-    }
-
-    function removeWin(player) {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game || !game.winners || !game.winners[player]) return;
-      game.winners[player]--;
-      if (game.winners[player] <= 0) delete game.winners[player];
-      renderGameLeaderboard(game);
-      saveToStorage();
-    }
-
-    function openLeaderboardModal() {
-      const container = document.getElementById('globalLeaderboardList');
-      container.innerHTML = '';
-
-      const scores = {};
-      games.forEach(g => {
-        if (g.winners) {
-          Object.entries(g.winners).forEach(([player, wins]) => {
-            scores[player] = (scores[player] || 0) + wins;
-          });
-        }
-      });
-
-      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-
-      if (sorted.length === 0) {
-        container.innerHTML = '<div class="text-center py-6 text-slate-500 text-sm">Nessuna vittoria registrata.</div>';
-      } else {
-        sorted.forEach(([player, wins], idx) => {
-          const medal = idx === 0 ? '🥇 1°' : idx === 1 ? '🥈 2°' : idx === 2 ? '🥉 3°' : `${idx + 1}°`;
-          const item = document.createElement('div');
-          item.className = "flex justify-between items-center bg-slate-800/80 p-3 rounded-xl border border-slate-700/60";
-          item.innerHTML = `
-            <div class="flex items-center gap-2">
-              <span class="font-black text-xs px-2 py-0.5 bg-slate-900 rounded-md text-amber-300">${medal}</span>
-              <span class="font-bold text-white text-sm">${player}</span>
-            </div>
-            <span class="text-sm font-black text-amber-400">${wins} 🏆</span>
-          `;
-          container.appendChild(item);
-        });
-      }
-
-      document.getElementById('leaderboardModal').classList.remove('hidden');
-      document.getElementById('leaderboardModal').classList.add('flex');
-    }
-
-    function closeLeaderboardModal() {
-      document.getElementById('leaderboardModal').classList.add('hidden');
-      document.getElementById('leaderboardModal').classList.remove('flex');
-    }
-
-    function closeDetailModal() {
-      document.getElementById('detailModal').classList.add('hidden');
-      document.getElementById('detailModal').classList.remove('flex');
-    }
-
-    function openModal(isEdit = false) {
-      document.getElementById('formModal').classList.remove('hidden');
-      document.getElementById('formModal').classList.add('flex');
-      
-      if (!isEdit) {
-        document.getElementById('gameForm').reset();
-        document.getElementById('gameId').value = '';
-        document.getElementById('formImageUrl').value = '';
-        document.getElementById('aiSearchInput').value = '';
-        clearCoverPreview();
-        document.getElementById('formTitle').innerText = 'Aggiungi Gioco';
-        setFormRating(5);
-      }
-    }
-
-    function closeFormModal() {
-      document.getElementById('formModal').classList.add('hidden');
-      document.getElementById('formModal').classList.remove('flex');
-    }
-
-    function setFormRating(val) {
-      document.getElementById('formRating').value = val;
-      const stars = document.getElementById('starPicker').children;
-      for (let i = 0; i < 5; i++) {
-        stars[i].className = i < val ? 'star-btn text-amber-400' : 'star-btn text-slate-600';
-      }
-    }
-
-    function editCurrentGame() {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      closeDetailModal();
-      openModal(true);
-
-      document.getElementById('formTitle').innerText = 'Modifica Gioco';
-      document.getElementById('gameId').value = game.id;
-      document.getElementById('aiSearchInput').value = game.name;
-      document.getElementById('formName').value = game.name;
-      document.getElementById('formCategory').value = game.category || '';
-      document.getElementById('formDifficulty').value = game.difficulty || 'Normale';
-      document.getElementById('formPlayers').value = game.players || '';
-      document.getElementById('formTime').value = game.time || '';
-      document.getElementById('formDesc').value = game.desc || '';
-      
-      if (game.image) {
-        document.getElementById('formImageUrl').value = game.image;
-        document.getElementById('formImagePreview').src = game.image;
-        document.getElementById('previewCoverContainer').classList.remove('hidden');
-        document.getElementById('previewCoverContainer').classList.add('flex');
-      } else {
-        clearCoverPreview();
-      }
-
-      setFormRating(game.rating || 5);
-    }
-
-    function deleteCurrentGame() {
-      if (!confirm('Vuoi davvero eliminare questo gioco?')) return;
-      games = games.filter(g => g.id !== currentSelectedId);
-      saveToStorage();
-      closeDetailModal();
-    }
-
-    async function saveGame(e) {
-      e.preventDefault();
-      const id = document.getElementById('gameId').value || Date.now().toString();
-      const fileInput = document.getElementById('formImageFile');
-      let imgData = document.getElementById('formImageUrl').value;
-
-      if (fileInput.files && fileInput.files[0]) {
-        imgData = await toBase64(fileInput.files[0]);
-      }
-
-      const existingGame = games.find(g => g.id === id);
-
-      const gameObj = {
-        id: id,
-        name: document.getElementById('formName').value,
-        category: document.getElementById('formCategory').value,
-        difficulty: document.getElementById('formDifficulty').value,
-        players: document.getElementById('formPlayers').value,
-        time: document.getElementById('formTime').value,
-        rating: parseInt(document.getElementById('formRating').value),
-        plays: existingGame ? existingGame.plays : 0,
-        winners: existingGame ? existingGame.winners : {},
-        desc: document.getElementById('formDesc').value,
-        comment: existingGame ? existingGame.comment : '',
-        image: imgData
-      };
-
-      const idx = games.findIndex(g => g.id === id);
-      if (idx >= 0) games[idx] = gameObj;
-      else games.push(gameObj);
-
-      saveToStorage();
-      closeFormModal();
-      if (currentSelectedId === id) openDetailModal(id);
-    }
-
-    const toBase64 = file => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-
-    function exportData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(games));
-      const a = document.createElement('a');
-      a.href = dataStr;
-      a.download = "ludoteca_backup.json";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-
-    function importData(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        try {
-          games = JSON.parse(event.target.result);
-          saveToStorage();
-          alert('Dati importati con successo!');
-        } catch (err) {
-          alert('File JSON non valido.');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    updateCategoryDropdown();
-    renderGames();
-  </script>
-</body>
-</html>
+        rawText = rawText.replace(/```json/g, '').replace(/
