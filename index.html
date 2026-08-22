@@ -89,7 +89,6 @@
           </div>
         </div>
 
-        <!-- Tracciamento Partite & Vittorie -->
         <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-bold text-indigo-300">🎮 Partite Giocate: <span id="detailPlays" class="text-white">0</span></span>
@@ -118,7 +117,6 @@
           <p id="detailDesc" class="text-sm text-slate-300 bg-slate-800/40 p-3 rounded-xl border border-slate-800 leading-relaxed max-h-36 overflow-y-auto"></p>
         </div>
 
-        <!-- Note al Volo -->
         <div>
           <div class="flex justify-between items-center mb-1">
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Commento / Note Personali</h3>
@@ -151,7 +149,7 @@
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl my-auto">
       <h2 id="formTitle" class="text-lg font-bold text-white mb-4">Aggiungi Gioco</h2>
       
-      <!-- Ricerca Globale BGG con Micro-Proxy Privato -->
+      <!-- Ricerca Globale BGG -->
       <div class="mb-4 bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-xl relative">
         <label class="text-xs font-bold text-indigo-300 block mb-1">🌍 Cerca su BoardGameGeek (Database Completo)</label>
         <div class="flex gap-2">
@@ -236,7 +234,6 @@
   </div>
 
   <script>
-    // Configura qui il link del tuo Cloudflare Worker personale
     const MY_WORKER_URL = "https://calm-frog-b178.nixhetgame.workers.dev";
 
     let games = JSON.parse(localStorage.getItem('boardgames_db')) || [];
@@ -246,7 +243,7 @@
       const bggTarget = `https://boardgamegeek.com/xmlapi2/${endpoint}`;
       const url = `${MY_WORKER_URL}?url=${encodeURIComponent(bggTarget)}`;
       const res = await fetch(url);
-      if (!res.ok) throw new Error("Errore chiamata proxy");
+      if (!res.ok) throw new Error("Status: " + res.status);
       const text = await res.text();
       return new DOMParser().parseFromString(text, "text/xml");
     }
@@ -359,7 +356,7 @@
         }
         dropdown.classList.remove('hidden');
       } catch (err) {
-        alert("Errore durante la ricerca. Verifica che il link del Worker su Cloudflare sia inserito correttamente.");
+        alert("Errore durante la ricerca: " + err.message);
       } finally {
         btn.innerText = 'Cerca';
         btn.disabled = false;
@@ -414,7 +411,7 @@
         }
 
       } catch (err) {
-        alert("Errore nel recupero della scheda completa.");
+        alert("Errore nel recupero della scheda.");
       }
     }
 
@@ -728,4 +725,5 @@
     renderGames();
   </script>
 </body>
+</html>
 </html>
