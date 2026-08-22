@@ -71,9 +71,8 @@
   <!-- Scheda Dettaglio Gioco -->
   <div id="detailModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl my-auto">
-      <div class="relative h-64 bg-slate-800 flex items-center justify-center">
-        <img id="detailImg" referrerpolicy="no-referrer" src="" alt="Copertina" class="w-full h-full object-cover hidden">
-        <span id="detailImgFallback" class="text-6xl text-slate-600 hidden">🎲</span>
+      <div class="relative h-64 bg-slate-800">
+        <img id="detailImg" referrerpolicy="no-referrer" src="" alt="Copertina" class="w-full h-full object-cover">
         <button onclick="closeDetailModal()" class="absolute top-3 right-3 bg-slate-900/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg backdrop-blur-md">✕</button>
         <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent p-4 pt-10">
           <div class="flex flex-wrap gap-2 mb-1">
@@ -165,7 +164,7 @@
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl my-auto">
       <h2 class="text-lg font-bold text-white mb-2 flex items-center gap-2">🤖 Configura Google Gemini IA</h2>
       <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-        Inserisci la tua API Key gratuita di Google AI Studio per sbloccare l'accesso istantaneo a qualsiasi gioco, variante o espansione esistente.
+        Inserisci la tua API Key di Google AI Studio per sbloccare l'accesso istantaneo a qualsiasi gioco, variante o espansione esistente.
       </p>
       <div class="space-y-3">
         <div>
@@ -205,7 +204,6 @@
           <input type="text" id="formName" required class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-white">
         </div>
 
-        <!-- Selettore Tipologia -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
           <div>
             <label class="text-xs font-semibold text-slate-400 block mb-1">Tipo Titolo *</label>
@@ -224,15 +222,16 @@
         </div>
 
         <div id="previewCoverContainer" class="hidden items-center gap-3 p-2 bg-slate-800/60 rounded-xl border border-slate-700/60">
-          <img id="formImagePreview" referrerpolicy="no-referrer" src="" class="w-12 h-12 object-cover rounded-lg">
+          <img id="formImagePreview" referrerpolicy="no-referrer" src="" class="w-14 h-14 object-cover rounded-lg border border-slate-700">
           <div class="flex-1 min-w-0">
-            <p class="text-xs text-emerald-400 font-semibold">Copertina Riconosciuta</p>
+            <p class="text-xs text-emerald-400 font-semibold">Copertina Caricata</p>
+            <span id="coverSourceLabel" class="text-[10px] text-slate-400">Immagine attiva</span>
           </div>
           <button type="button" onclick="clearCoverPreview()" class="text-xs text-slate-400 hover:text-white px-2">✕</button>
         </div>
 
         <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Oppure Carica Immagine Locale</label>
+          <label class="text-xs font-semibold text-slate-400 block mb-1">Oppure Carica Immagine Locale dal Dispositivo</label>
           <input type="file" id="formImageFile" accept="image/*" class="w-full bg-slate-800 text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white rounded-lg border border-slate-700">
         </div>
 
@@ -338,22 +337,73 @@
       }
     }
 
-    async function fetchRealCoverImage(searchQuery) {
-      try {
-        const cleanQuery = encodeURIComponent(searchQuery.trim());
-        const res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${cleanQuery}&gsrlimit=1&prop=pageimages&pithumbsize=600&format=json&origin=*`);
-        const data = await res.json();
-        const pages = data.query?.pages;
-        if (pages) {
-          const first = Object.values(pages)[0];
-          if (first?.thumbnail?.source) return first.thumbnail.source;
+    // Generatore di copertina tematica vettoriale dinamica (fallback ad alta risoluzione)
+    function generateThemedCoverSVG(title, type) {
+      const isExp = type === 'expansion';
+      const isSta = type === 'standalone';
+      const bgGrad1 = isExp ? "#78350f" : isSta ? "#581c87" : "#1e1b4b";
+      const bgGrad2 = isExp ? "#1c1917" : isSta ? "#1e1b4b" : "#0f172a";
+      const badgeText = isExp ? "ESPANSIONE" : isSta ? "STANDALONE" : "GIOCO BASE";
+      const icon = isExp ? "🧩" : isSta ? "⚡" : "🎲";
+      const escapedTitle = (title || "Gioco").replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+
+      const svg = `
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 600 600" width="600" height="600">
+          <defs>
+            <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="${bgGrad1}" />
+              <stop offset="100%" stop-color="${bgGrad2}" />
+            </linearGradient>
+          </defs>
+          <rect width="600" height="600" fill="url(#grad)" />
+          <circle cx="300" cy="240" r="120" fill="white" fill-opacity="0.05" />
+          <text x="300" y="270" font-size="110" text-anchor="middle" font-family="sans-serif">${icon}</text>
+          <rect x="180" y="380" width="240" height="34" rx="17" fill="white" fill-opacity="0.15" />
+          <text x="300" y="403" font-size="14" font-weight="900" fill="#f8fafc" text-anchor="middle" font-family="sans-serif" letter-spacing="2">${badgeText}</text>
+          <text x="300" y="470" font-size="28" font-weight="bold" fill="#ffffff" text-anchor="middle" font-family="sans-serif">
+            <tspan x="300" dy="0">${escapedTitle.slice(0, 24)}</tspan>
+            ${escapedTitle.length > 24 ? `<tspan x="300" dy="34">${escapedTitle.slice(24, 48)}</tspan>` : ''}
+          </text>
+        </svg>
+      `.trim();
+      return "data:image/svg+xml;utf8," + encodeURIComponent(svg);
+    }
+
+    // Ricerca robusta copertina online con query multiple
+    async function fetchCoverOnline(gameName) {
+      const queries = [
+        gameName.trim(),
+        `${gameName.trim()} board game`,
+        `${gameName.trim()} gioco da tavolo`
+      ];
+
+      for (const q of queries) {
+        try {
+          // Ricerca su Wikipedia IT
+          let res = await fetch(`https://it.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=1&prop=pageimages&pithumbsize=600&format=json&origin=*`);
+          let data = await res.json();
+          let pages = data.query?.pages;
+          if (pages) {
+            let first = Object.values(pages)[0];
+            if (first?.thumbnail?.source) return first.thumbnail.source;
+          }
+
+          // Ricerca su Wikipedia EN
+          res = await fetch(`https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(q)}&gsrlimit=1&prop=pageimages&pithumbsize=600&format=json&origin=*`);
+          data = await res.json();
+          pages = data.query?.pages;
+          if (pages) {
+            let first = Object.values(pages)[0];
+            if (first?.thumbnail?.source) return first.thumbnail.source;
+          }
+        } catch (e) {
+          // Continua con la query successiva
         }
-      } catch (e) {
-        console.warn("Cover fetch fallback", e);
       }
       return null;
     }
 
+    // Ricerca IA con Gemini 3.6
     async function searchWithGemini() {
       const query = document.getElementById('aiSearchInput').value.trim();
       if (!query) return;
@@ -367,7 +417,7 @@
       btn.innerText = '⏳ Cerco...';
       btn.disabled = true;
 
-      const systemPrompt = `Sei un esperto mondiale di giochi da tavolo ed espansioni. Analizza il titolo fornito e rispondi ESCLUSIVAMENTE con un JSON valido (senza markdown o testo extra). 
+      const systemPrompt = `Sei un esperto mondiale di giochi da tavolo ed espansioni. Analizza il titolo fornito e rispondi ESCLUSIVAMENTE con un JSON valido (senza blocchi markdown o testo extra). 
 Identifica accuratamente la tipologia:
 - "base" se è un gioco base autonomo;
 - "expansion" se è un'espansione che richiede obbligatoriamente il gioco base;
@@ -406,7 +456,8 @@ Struttura JSON:
         rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
         const gameData = JSON.parse(rawText);
 
-        document.getElementById('formName').value = gameData.name || query;
+        const finalName = gameData.name || query;
+        document.getElementById('formName').value = finalName;
         document.getElementById('formCategory').value = gameData.category || 'Tavolo / Strategia';
         document.getElementById('formDifficulty').value = ['Facile','Normale','Difficile','Estrema'].includes(gameData.difficulty) ? gameData.difficulty : 'Normale';
         document.getElementById('formPlayers').value = gameData.players || '2-4 Giocatori';
@@ -424,15 +475,15 @@ Struttura JSON:
           }
         }
 
-        const realCover = await fetchRealCoverImage(gameData.name || query);
-        if (realCover) {
-          document.getElementById('formImageUrl').value = realCover;
-          document.getElementById('formImagePreview').src = realCover;
-          document.getElementById('previewCoverContainer').classList.remove('hidden');
-          document.getElementById('previewCoverContainer').classList.add('flex');
-        } else {
-          clearCoverPreview();
-        }
+        // Recupero copertina o generazione copertina tematica
+        const onlineCover = await fetchCoverOnline(finalName);
+        const finalCover = onlineCover || generateThemedCoverSVG(finalName, detectedType);
+
+        document.getElementById('formImageUrl').value = finalCover;
+        document.getElementById('formImagePreview').src = finalCover;
+        document.getElementById('coverSourceLabel').innerText = onlineCover ? "Copertina Web ufficiale" : "Grafica Tematica Vettoriale";
+        document.getElementById('previewCoverContainer').classList.remove('hidden');
+        document.getElementById('previewCoverContainer').classList.add('flex');
 
       } catch (err) {
         alert("Errore durante l'elaborazione IA: " + err.message);
@@ -485,13 +536,11 @@ Struttura JSON:
         const totalWins = game.winners ? Object.values(game.winners).reduce((a, b) => a + b, 0) : 0;
         const typeInfo = getTypeBadge(game.itemType || 'base');
         const attachedExpCount = games.filter(e => e.parentGameId === game.id).length;
+        const coverSrc = game.image || generateThemedCoverSVG(game.name, game.itemType || 'base');
 
         card.innerHTML = `
           <div class="relative aspect-square bg-slate-800 overflow-hidden flex items-center justify-center">
-            ${game.image ? 
-              `<img referrerpolicy="no-referrer" src="${game.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="${game.name}">` :
-              `<span class="text-4xl text-slate-600">🎲</span>`
-            }
+            <img referrerpolicy="no-referrer" src="${coverSrc}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="${game.name}">
             <div class="absolute top-2 right-2 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded text-[11px] font-bold text-amber-400">
               ⭐ ${game.rating}
             </div>
@@ -578,18 +627,7 @@ Struttura JSON:
       }
 
       document.getElementById('detailPlayersTime').innerText = `👥 ${game.players || 'N/D'} | ⏱️ ${game.time || 'N/D'}`;
-      
-      const imgEl = document.getElementById('detailImg');
-      const fallbackEl = document.getElementById('detailImgFallback');
-      if (game.image) {
-        imgEl.src = game.image;
-        imgEl.classList.remove('hidden');
-        fallbackEl.classList.add('hidden');
-      } else {
-        imgEl.classList.add('hidden');
-        fallbackEl.classList.remove('hidden');
-      }
-
+      document.getElementById('detailImg').src = game.image || generateThemedCoverSVG(game.name, itemType);
       document.getElementById('detailPlays').innerText = game.plays || 0;
       document.getElementById('detailDesc').innerText = game.desc || 'Nessuna descrizione presente.';
       document.getElementById('detailCommentInput').value = game.comment || '';
@@ -790,6 +828,7 @@ Struttura JSON:
       if (game.image) {
         document.getElementById('formImageUrl').value = game.image;
         document.getElementById('formImagePreview').src = game.image;
+        document.getElementById('coverSourceLabel').innerText = "Immagine salvata";
         document.getElementById('previewCoverContainer').classList.remove('hidden');
         document.getElementById('previewCoverContainer').classList.add('flex');
       } else {
