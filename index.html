@@ -52,7 +52,7 @@
     </div>
   </header>
 
-  <!-- Griglia Card -->
+  <!-- Griglia Giochi -->
   <main class="max-w-4xl mx-auto px-4 mt-6">
     <div id="gamesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
     <div id="emptyState" class="hidden text-center py-16 text-slate-500">
@@ -62,7 +62,7 @@
     </div>
   </main>
 
-  <!-- Scheda Dettaglio Gioco -->
+  <!-- Modale Dettaglio -->
   <div id="detailModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl my-auto">
       <div class="relative h-64 bg-slate-800">
@@ -122,7 +122,7 @@
             <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Commento / Note Personali</h3>
             <span id="commentSaveIndicator" class="text-[10px] text-emerald-400 hidden">Salvato ✓</span>
           </div>
-          <textarea id="detailCommentInput" oninput="saveCommentDirectly()" placeholder="Scrivi qui note o strategie personali..." rows="2" class="w-full bg-slate-800 text-sm rounded-xl p-3 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"></textarea>
+          <textarea id="detailCommentInput" oninput="saveCommentDirectly()" placeholder="Scrivi qui note o pareri personali..." rows="2" class="w-full bg-slate-800 text-sm rounded-xl p-3 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"></textarea>
         </div>
 
         <div class="flex gap-2 pt-2 border-t border-slate-800">
@@ -133,7 +133,7 @@
     </div>
   </div>
 
-  <!-- Classifica Globale -->
+  <!-- Modale Classifica Globale -->
   <div id="leaderboardModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl my-auto">
       <div class="flex justify-between items-center mb-4">
@@ -144,14 +144,14 @@
     </div>
   </div>
 
-  <!-- Form Inserimento/Modifica -->
+  <!-- Modale Inserimento/Modifica -->
   <div id="formModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
     <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl my-auto">
       <h2 id="formTitle" class="text-lg font-bold text-white mb-4">Aggiungi Gioco</h2>
       
-      <!-- Ricerca Universale Ibrida (Database Globale) -->
+      <!-- Ricerca Universale Ibrida -->
       <div class="mb-4 bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-xl relative">
-        <label class="text-xs font-bold text-indigo-300 block mb-1">🌍 Cerca Gioco o Espansione (Archivio Mondiale)</label>
+        <label class="text-xs font-bold text-indigo-300 block mb-1">🔍 Cerca Gioco o Espansione</label>
         <div class="flex gap-2">
           <input type="text" id="globalSearchInput" oninput="handleInstantSearch(this.value)" onkeydown="if(event.key==='Enter'){event.preventDefault();searchOnlineGlobal();}" placeholder="es. Catan, Dune, Wingspan, Risiko, Monopoly..." class="flex-1 bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white focus:outline-none focus:border-indigo-500">
           <button type="button" id="btnGlobalSearch" onclick="searchOnlineGlobal()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-2 rounded-lg font-semibold whitespace-nowrap active:scale-95">Cerca Web</button>
@@ -234,7 +234,6 @@
   </div>
 
   <script>
-    // Archivio Offline Istantaneo ad alta risoluzione
     const LOCAL_DB = [
       { name: "Catan", category: "Gestione Risorse, Commercio", difficulty: "Normale", players: "3-4 Giocatori", time: "60-90 min", image: "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=600&auto=format&fit=crop&q=80", desc: "Colonizza l'isola di Catan costruendo villaggi, città e strade commerciando materie prime." },
       { name: "Catan: Marinai (Espansione)", category: "Espansione, Esplorazione", difficulty: "Normale", players: "3-4 Giocatori", time: "90-120 min", image: "https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=600&auto=format&fit=crop&q=80", desc: "Naviga tra le isole circostanti Catan con rotte marittime e territori ricchi d'oro." },
@@ -324,7 +323,6 @@
       select.innerHTML = '<option value="">Tutte le categorie</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
     }
 
-    // Ricerca Istantanea Locale mentre si digita
     function handleInstantSearch(text) {
       const query = text.toLowerCase().trim();
       const dropdown = document.getElementById('globalResultsDropdown');
@@ -357,7 +355,6 @@
       }
     }
 
-    // Ricerca Globale Online ad Alta Precisione (Wikidata Open API)
     async function searchOnlineGlobal() {
       const query = document.getElementById('globalSearchInput').value.trim();
       if (!query) return;
@@ -375,7 +372,6 @@
         dropdown.innerHTML = '';
         let pages = data.query?.pages ? Object.values(data.query.pages) : [];
 
-        // Se in italiano ci sono pochi risultati, cerca in inglese
         if (pages.length === 0) {
           const urlEn = `https://en.wikipedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query + ' "board game"')}&gsrlimit=10&prop=pageimages|extracts&exintro=1&explaintext=1&pithumbsize=600&format=json&origin=*`;
           const resEn = await fetch(urlEn);
@@ -406,7 +402,7 @@
         }
         dropdown.classList.remove('hidden');
       } catch (err) {
-        alert("Errore durante la ricerca.");
+        alert("Errore durante la ricerca online.");
       } finally {
         btn.innerText = 'Cerca Web';
         btn.disabled = false;
@@ -766,674 +762,4 @@
     renderGames();
   </script>
 </body>
-</html>    </div>
-  </main>
-
-  <!-- Scheda Dettaglio Gioco -->
-  <div id="detailModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-lg rounded-2xl overflow-hidden shadow-2xl my-auto">
-      <div class="relative h-64 bg-slate-800">
-        <img id="detailImg" referrerpolicy="no-referrer" src="" alt="Copertina" class="w-full h-full object-cover">
-        <button onclick="closeDetailModal()" class="absolute top-3 right-3 bg-slate-900/80 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold text-lg backdrop-blur-md">✕</button>
-        <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-slate-900 via-slate-900/60 to-transparent p-4 pt-10">
-          <div class="flex gap-2">
-            <span id="detailCategory" class="text-xs font-semibold px-2 py-0.5 bg-indigo-600/80 text-indigo-100 rounded-md"></span>
-            <span id="detailDifficulty" class="text-xs font-semibold px-2 py-0.5 rounded-md"></span>
-          </div>
-          <h2 id="detailTitle" class="text-2xl font-black text-white mt-1 leading-tight"></h2>
-        </div>
-      </div>
-
-      <div class="p-5 space-y-4">
-        <div class="flex items-center justify-between bg-slate-800/60 p-3 rounded-xl border border-slate-700/50">
-          <div>
-            <span class="text-xs text-slate-400 block mb-0.5">Voto (Tocca per modificare)</span>
-            <div id="detailStars" class="flex gap-1 text-xl"></div>
-          </div>
-          <div class="text-right">
-            <span class="text-xs text-slate-400 block mb-0.5">Specifiche</span>
-            <span id="detailPlayersTime" class="text-xs font-semibold text-slate-200"></span>
-          </div>
-        </div>
-
-        <div class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-bold text-indigo-300">🎮 Partite Giocate: <span id="detailPlays" class="text-white">0</span></span>
-            <div class="flex gap-1">
-              <button onclick="adjustPlays(1)" class="bg-indigo-600 text-white px-2.5 py-1 rounded-lg text-xs font-bold active:scale-95">+1 Partita</button>
-              <button onclick="adjustPlays(-1)" class="bg-slate-700 text-slate-300 px-2 py-1 rounded-lg text-xs font-bold active:scale-95">-</button>
-            </div>
-          </div>
-
-          <div class="pt-2 border-t border-slate-700/50">
-            <span class="text-xs font-bold text-amber-400 block mb-1.5">🏆 Assegna Vittoria a Giocatore</span>
-            <div class="flex gap-2">
-              <input type="text" id="winnerNameInput" placeholder="Nome vincitore..." class="flex-1 bg-slate-900 text-xs rounded-lg px-3 py-2 border border-slate-700 text-white focus:outline-none focus:border-amber-500">
-              <button onclick="addWinnerScore()" class="bg-amber-600 hover:bg-amber-500 text-white text-xs px-3 py-2 rounded-lg font-bold whitespace-nowrap active:scale-95">+ Vittoria</button>
-            </div>
-          </div>
-
-          <div id="gameLeaderboardContainer" class="pt-2">
-            <span class="text-[11px] font-semibold text-slate-400 block mb-1">Ranking di questo gioco:</span>
-            <div id="gameLeaderboardList" class="space-y-1"></div>
-          </div>
-        </div>
-
-        <div>
-          <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-1">Descrizione</h3>
-          <p id="detailDesc" class="text-sm text-slate-300 bg-slate-800/40 p-3 rounded-xl border border-slate-800 leading-relaxed max-h-36 overflow-y-auto"></p>
-        </div>
-
-        <div>
-          <div class="flex justify-between items-center mb-1">
-            <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Commento / Note Personali</h3>
-            <span id="commentSaveIndicator" class="text-[10px] text-emerald-400 hidden">Salvato ✓</span>
-          </div>
-          <textarea id="detailCommentInput" oninput="saveCommentDirectly()" placeholder="Scrivi qui note o strategie personali..." rows="2" class="w-full bg-slate-800 text-sm rounded-xl p-3 border border-slate-700 text-white focus:outline-none focus:border-indigo-500"></textarea>
-        </div>
-
-        <div class="flex gap-2 pt-2 border-t border-slate-800">
-          <button onclick="editCurrentGame()" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-xl text-sm font-semibold border border-slate-700">Modifica Dati</button>
-          <button onclick="deleteCurrentGame()" class="bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 px-4 py-2 rounded-xl text-sm font-semibold border border-rose-500/30">Elimina</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Classifica Globale -->
-  <div id="leaderboardModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl my-auto">
-      <div class="flex justify-between items-center mb-4">
-        <h2 class="text-lg font-bold text-white flex items-center gap-2">🏆 Classifica Globale Giocatori</h2>
-        <button onclick="closeLeaderboardModal()" class="text-slate-400 hover:text-white text-lg font-bold">✕</button>
-      </div>
-      <div id="globalLeaderboardList" class="space-y-2 max-h-80 overflow-y-auto"></div>
-    </div>
-  </div>
-
-  <!-- Form Inserimento/Modifica -->
-  <div id="formModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm hidden items-center justify-center p-4 overflow-y-auto">
-    <div class="bg-slate-900 border border-slate-800 w-full max-w-md rounded-2xl p-5 shadow-2xl my-auto">
-      <h2 id="formTitle" class="text-lg font-bold text-white mb-4">Aggiungi Gioco</h2>
-      
-      <!-- Ricerca Globale BGG -->
-      <div class="mb-4 bg-indigo-950/40 border border-indigo-900/60 p-3 rounded-xl relative">
-        <label class="text-xs font-bold text-indigo-300 block mb-1">🌍 Cerca su BoardGameGeek (Database Completo)</label>
-        <div class="flex gap-2">
-          <input type="text" id="bggSearchInput" onkeydown="if(event.key==='Enter'){event.preventDefault();searchBGG();}" placeholder="Qualsiasi gioco o espansione..." class="flex-1 bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white focus:outline-none focus:border-indigo-500">
-          <button type="button" id="btnBggSearch" onclick="searchBGG()" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-3 py-2 rounded-lg font-semibold whitespace-nowrap active:scale-95">Cerca</button>
-        </div>
-        <div id="bggResultsDropdown" class="hidden absolute top-full left-0 right-0 mt-1 bg-slate-900 border border-slate-700 rounded-xl max-h-56 overflow-y-auto z-50 shadow-2xl"></div>
-      </div>
-
-      <form id="gameForm" onsubmit="saveGame(event)" class="space-y-3">
-        <input type="hidden" id="gameId">
-        <input type="hidden" id="formImageUrl">
-        
-        <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Nome del Gioco *</label>
-          <input type="text" id="formName" required class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-white">
-        </div>
-
-        <div id="previewCoverContainer" class="hidden items-center gap-3 p-2 bg-slate-800/60 rounded-xl border border-slate-700/60">
-          <img id="formImagePreview" referrerpolicy="no-referrer" src="" class="w-12 h-12 object-cover rounded-lg">
-          <div class="flex-1 min-w-0">
-            <p class="text-xs text-emerald-400 font-semibold">Copertina Caricata</p>
-          </div>
-          <button type="button" onclick="clearCoverPreview()" class="text-xs text-slate-400 hover:text-white px-2">✕</button>
-        </div>
-
-        <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Oppure Carica Immagine Locale</label>
-          <input type="file" id="formImageFile" accept="image/*" class="w-full bg-slate-800 text-xs text-slate-400 file:mr-2 file:py-1 file:px-2 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-indigo-600 file:text-white rounded-lg border border-slate-700">
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-xs font-semibold text-slate-400 block mb-1">Categoria / Tipo</label>
-            <input type="text" id="formCategory" placeholder="es. Strategia, Risorse" class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white">
-          </div>
-          <div>
-            <label class="text-xs font-semibold text-slate-400 block mb-1">Difficoltà</label>
-            <select id="formDifficulty" class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white">
-              <option value="Facile">🟢 Facile</option>
-              <option value="Normale" selected>🟡 Normale</option>
-              <option value="Difficile">🟠 Difficile</option>
-              <option value="Estrema">🔴 Estrema</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="grid grid-cols-2 gap-2">
-          <div>
-            <label class="text-xs font-semibold text-slate-400 block mb-1">Giocatori</label>
-            <input type="text" id="formPlayers" placeholder="es. 3-4 Giocatori" class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white">
-          </div>
-          <div>
-            <label class="text-xs font-semibold text-slate-400 block mb-1">Durata</label>
-            <input type="text" id="formTime" placeholder="es. 60-90 min" class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white">
-          </div>
-        </div>
-
-        <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Voto Iniziale (1-5)</label>
-          <div id="starPicker" class="flex gap-1 text-2xl text-slate-600">
-            <span class="star-btn" onclick="setFormRating(1)">★</span>
-            <span class="star-btn" onclick="setFormRating(2)">★</span>
-            <span class="star-btn" onclick="setFormRating(3)">★</span>
-            <span class="star-btn" onclick="setFormRating(4)">★</span>
-            <span class="star-btn" onclick="setFormRating(5)">★</span>
-          </div>
-          <input type="hidden" id="formRating" value="5">
-        </div>
-
-        <div>
-          <label class="text-xs font-semibold text-slate-400 block mb-1">Descrizione</label>
-          <textarea id="formDesc" rows="3" class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white focus:outline-none"></textarea>
-        </div>
-
-        <div class="flex justify-end gap-2 pt-2">
-          <button type="button" onclick="closeFormModal()" class="px-4 py-2 bg-slate-800 text-slate-300 rounded-lg text-sm font-semibold">Annulla</button>
-          <button type="submit" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-500 text-white rounded-lg text-sm font-bold">Salva</button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <script>
-    const MY_WORKER_URL = "https://calm-frog-b178.nixhetgame.workers.dev";
-
-    let games = JSON.parse(localStorage.getItem('boardgames_db')) || [];
-    let currentSelectedId = null;
-
-   async function queryBGG(endpoint) {
-      const bggTarget = `https://api.geekdo.com/xmlapi2/${endpoint}`;
-      const url = `${MY_WORKER_URL}?url=${encodeURIComponent(bggTarget)}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error("Status " + res.status);
-      const text = await res.text();
-      if (!text || !text.includes("<items") && !text.includes("<boardgames")) {
-        console.warn("BGG Response:", text);
-      }
-      return new DOMParser().parseFromString(text, "text/xml");
-    }
-
-    function saveToStorage() {
-      localStorage.setItem('boardgames_db', JSON.stringify(games));
-      updateCategoryDropdown();
-      renderGames();
-    }
-
-    function getDifficultyBadge(diff) {
-      if (diff === 'Facile') return 'bg-emerald-950 text-emerald-300 border border-emerald-800';
-      if (diff === 'Difficile') return 'bg-amber-950 text-amber-300 border border-amber-800';
-      if (diff === 'Estrema') return 'bg-rose-950 text-rose-300 border border-rose-800';
-      return 'bg-blue-950 text-blue-300 border border-blue-800';
-    }
-
-    function renderGames() {
-      const grid = document.getElementById('gamesGrid');
-      const search = document.getElementById('searchInput').value.toLowerCase();
-      const filterCat = document.getElementById('filterCategory').value;
-      const sortBy = document.getElementById('sortBy').value;
-
-      let filtered = games.filter(g => {
-        const matchesSearch = g.name.toLowerCase().includes(search) || (g.desc && g.desc.toLowerCase().includes(search));
-        const matchesCat = !filterCat || g.category === filterCat;
-        return matchesSearch && matchesCat;
-      });
-
-      filtered.sort((a, b) => {
-        if (sortBy === 'name') return a.name.localeCompare(b.name);
-        if (sortBy === 'rating') return b.rating - a.rating;
-        if (sortBy === 'plays') return (b.plays || 0) - (a.plays || 0);
-      });
-
-      grid.innerHTML = '';
-      document.getElementById('emptyState').classList.toggle('hidden', filtered.length > 0);
-
-      filtered.forEach(game => {
-        const card = document.createElement('div');
-        card.className = "group bg-slate-900 rounded-2xl overflow-hidden border border-slate-800 shadow-md hover:border-slate-700 transition cursor-pointer flex flex-col active:scale-95";
-        card.onclick = () => openDetailModal(game.id);
-
-        const totalWins = game.winners ? Object.values(game.winners).reduce((a, b) => a + b, 0) : 0;
-
-        card.innerHTML = `
-          <div class="relative aspect-square bg-slate-800 overflow-hidden">
-            <img referrerpolicy="no-referrer" src="${game.image || 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=600&auto=format&fit=crop&q=80'}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="${game.name}">
-            <div class="absolute top-2 right-2 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded text-[11px] font-bold text-amber-400">
-              ⭐ ${game.rating}
-            </div>
-            ${game.difficulty ? `<div class="absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${getDifficultyBadge(game.difficulty)}">${game.difficulty}</div>` : ''}
-          </div>
-          <div class="p-3 flex flex-col flex-1 justify-between">
-            <div>
-              <h3 class="font-bold text-sm text-white truncate">${game.name}</h3>
-              <p class="text-[11px] text-slate-400 truncate">${game.category || 'Generico'}</p>
-            </div>
-            <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-              <span>🎮 ${game.plays || 0}</span>
-              <span>🏆 ${totalWins}</span>
-            </div>
-          </div>
-        `;
-        grid.appendChild(card);
-      });
-    }
-
-    function updateCategoryDropdown() {
-      const select = document.getElementById('filterCategory');
-      const cats = [...new Set(games.map(g => g.category).filter(Boolean))];
-      select.innerHTML = '<option value="">Tutte le categorie</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
-    }
-
-    async function searchBGG() {
-      const query = document.getElementById('bggSearchInput').value.trim();
-      if (!query) return;
-
-      const btn = document.getElementById('btnBggSearch');
-      const dropdown = document.getElementById('bggResultsDropdown');
-      btn.innerText = '⏳';
-      btn.disabled = true;
-
-      try {
-        const xml = await queryBGG(`search?query=${encodeURIComponent(query)}&type=boardgame,boardgameexpansion`);
-        const items = xml.querySelectorAll("item");
-
-        dropdown.innerHTML = '';
-        if (items.length === 0) {
-          dropdown.innerHTML = '<div class="p-3 text-xs text-slate-400">Nessun gioco trovato su BGG.</div>';
-        } else {
-          items.forEach(item => {
-            const id = item.getAttribute("id");
-            const isExp = item.getAttribute("type") === "boardgameexpansion";
-            const name = item.querySelector("name") ? item.querySelector("name").getAttribute("value") : "Sconosciuto";
-            const year = item.querySelector("yearpublished") ? item.querySelector("yearpublished").getAttribute("value") : "";
-
-            const opt = document.createElement('div');
-            opt.className = "p-2.5 hover:bg-slate-800 cursor-pointer border-b border-slate-800 text-xs flex justify-between items-center";
-            opt.innerHTML = `
-              <div class="truncate mr-2">
-                <span class="font-bold text-white block truncate">${name}</span>
-                <span class="text-[10px] ${isExp ? 'text-amber-400' : 'text-indigo-400'}">${isExp ? '🧩 Espansione' : '🎲 Gioco Base'} ${year ? `(${year})` : ''}</span>
-              </div>
-              <span class="text-indigo-400 font-bold shrink-0">Seleziona ➔</span>
-            `;
-            opt.onclick = () => fillGameFromBGG(id);
-            dropdown.appendChild(opt);
-          });
-        }
-        dropdown.classList.remove('hidden');
-      } catch (err) {
-        alert("Errore durante la ricerca: " + err.message);
-      } finally {
-        btn.innerText = 'Cerca';
-        btn.disabled = false;
-      }
-    }
-
-    async function fillGameFromBGG(id) {
-      const dropdown = document.getElementById('bggResultsDropdown');
-      dropdown.classList.add('hidden');
-
-      try {
-        const xml = await queryBGG(`thing?id=${id}&stats=1`);
-        const item = xml.querySelector("item");
-        if (!item) return;
-
-        const name = item.querySelector('name[type="primary"]')?.getAttribute("value") || item.querySelector('name')?.getAttribute("value");
-        if (name) document.getElementById('formName').value = name;
-
-        const img = item.querySelector("image")?.textContent || item.querySelector("thumbnail")?.textContent;
-        if (img) {
-          document.getElementById('formImageUrl').value = img.trim();
-          document.getElementById('formImagePreview').src = img.trim();
-          document.getElementById('previewCoverContainer').classList.remove('hidden');
-          document.getElementById('previewCoverContainer').classList.add('flex');
-        }
-
-        const cats = Array.from(item.querySelectorAll('link[type="boardgamecategory"]')).map(c => c.getAttribute("value"));
-        if (cats.length > 0) document.getElementById('formCategory').value = cats.slice(0, 2).join(', ');
-
-        const weight = parseFloat(item.querySelector("averageweight")?.getAttribute("value") || 0);
-        let diff = "Normale";
-        if (weight > 0) {
-          if (weight < 2.1) diff = "Facile";
-          else if (weight < 3.0) diff = "Normale";
-          else if (weight < 3.85) diff = "Difficile";
-          else diff = "Estrema";
-        }
-        document.getElementById('formDifficulty').value = diff;
-
-        const minP = item.querySelector("minplayers")?.getAttribute("value");
-        const maxP = item.querySelector("maxplayers")?.getAttribute("value");
-        if (minP && maxP) document.getElementById('formPlayers').value = minP === maxP ? `${minP} Giocatori` : `${minP}-${maxP} Giocatori`;
-
-        const minT = item.querySelector("minplaytime")?.getAttribute("value");
-        const maxT = item.querySelector("maxplaytime")?.getAttribute("value");
-        if (minT && maxT) document.getElementById('formTime').value = minT === maxT ? `${minT} min` : `${minT}-${maxT} min`;
-
-        const desc = item.querySelector("description")?.textContent;
-        if (desc) {
-          const cleanDesc = desc.replace(/&#10;/g, "\n").replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-          document.getElementById('formDesc').value = cleanDesc.slice(0, 500) + (cleanDesc.length > 500 ? '...' : '');
-        }
-
-      } catch (err) {
-        alert("Errore nel recupero della scheda.");
-      }
-    }
-
-    function clearCoverPreview() {
-      document.getElementById('formImageUrl').value = '';
-      document.getElementById('previewCoverContainer').classList.add('hidden');
-      document.getElementById('previewCoverContainer').classList.remove('flex');
-    }
-
-    function openDetailModal(id) {
-      const game = games.find(g => g.id === id);
-      if (!game) return;
-      currentSelectedId = id;
-      if (!game.winners) game.winners = {};
-
-      document.getElementById('detailTitle').innerText = game.name;
-      document.getElementById('detailCategory').innerText = game.category || 'Generico';
-      
-      const diffEl = document.getElementById('detailDifficulty');
-      if (game.difficulty) {
-        diffEl.innerText = game.difficulty;
-        diffEl.className = `text-xs font-semibold px-2 py-0.5 rounded-md ${getDifficultyBadge(game.difficulty)}`;
-        diffEl.classList.remove('hidden');
-      } else {
-        diffEl.classList.add('hidden');
-      }
-
-      document.getElementById('detailPlayersTime').innerText = `👥 ${game.players || 'N/D'} | ⏱️ ${game.time || 'N/D'}`;
-      document.getElementById('detailImg').src = game.image || 'https://images.unsplash.com/photo-1610890716171-6b1bb98ffd09?w=600&auto=format&fit=crop&q=80';
-      document.getElementById('detailPlays').innerText = game.plays || 0;
-      document.getElementById('detailDesc').innerText = game.desc || 'Nessuna descrizione presente.';
-      document.getElementById('detailCommentInput').value = game.comment || '';
-
-      renderDetailRatingStars(game.rating || 5);
-      renderGameLeaderboard(game);
-
-      document.getElementById('detailModal').classList.remove('hidden');
-      document.getElementById('detailModal').classList.add('flex');
-    }
-
-    function renderDetailRatingStars(rating) {
-      const container = document.getElementById('detailStars');
-      container.innerHTML = '';
-      for (let i = 1; i <= 5; i++) {
-        const span = document.createElement('span');
-        span.innerText = '★';
-        span.className = `star-btn ${i <= rating ? 'text-amber-400' : 'text-slate-600'}`;
-        span.onclick = () => {
-          const game = games.find(g => g.id === currentSelectedId);
-          if (!game) return;
-          game.rating = i;
-          renderDetailRatingStars(i);
-          saveToStorage();
-        };
-        container.appendChild(span);
-      }
-    }
-
-    function saveCommentDirectly() {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      game.comment = document.getElementById('detailCommentInput').value;
-      localStorage.setItem('boardgames_db', JSON.stringify(games));
-      
-      const ind = document.getElementById('commentSaveIndicator');
-      ind.classList.remove('hidden');
-      setTimeout(() => ind.classList.add('hidden'), 1500);
-    }
-
-    function adjustPlays(delta) {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      game.plays = Math.max(0, (game.plays || 0) + delta);
-      document.getElementById('detailPlays').innerText = game.plays;
-      saveToStorage();
-    }
-
-    function addWinnerScore() {
-      const input = document.getElementById('winnerNameInput');
-      const name = input.value.trim();
-      if (!name) return;
-
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      if (!game.winners) game.winners = {};
-
-      game.winners[name] = (game.winners[name] || 0) + 1;
-      game.plays = (game.plays || 0) + 1;
-      document.getElementById('detailPlays').innerText = game.plays;
-      input.value = '';
-
-      renderGameLeaderboard(game);
-      saveToStorage();
-    }
-
-    function renderGameLeaderboard(game) {
-      const list = document.getElementById('gameLeaderboardList');
-      list.innerHTML = '';
-      const entries = Object.entries(game.winners || {}).sort((a, b) => b[1] - a[1]);
-
-      if (entries.length === 0) {
-        list.innerHTML = '<span class="text-xs text-slate-500 italic">Nessuna vittoria registrata.</span>';
-        return;
-      }
-
-      entries.forEach(([player, wins], idx) => {
-        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '👤';
-        const row = document.createElement('div');
-        row.className = "flex justify-between items-center bg-slate-900/60 px-2.5 py-1 rounded-lg text-xs border border-slate-800";
-        row.innerHTML = `
-          <span class="text-slate-300 font-medium">${medal} ${player}</span>
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-amber-400">${wins} ${wins === 1 ? 'vittoria' : 'vittorie'}</span>
-            <button onclick="removeWin('${player}')" class="text-[10px] text-slate-500 hover:text-rose-400 px-1 font-bold">✕</button>
-          </div>
-        `;
-        list.appendChild(row);
-      });
-    }
-
-    function removeWin(player) {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game || !game.winners || !game.winners[player]) return;
-      game.winners[player]--;
-      if (game.winners[player] <= 0) delete game.winners[player];
-      renderGameLeaderboard(game);
-      saveToStorage();
-    }
-
-    function openLeaderboardModal() {
-      const container = document.getElementById('globalLeaderboardList');
-      container.innerHTML = '';
-
-      const scores = {};
-      games.forEach(g => {
-        if (g.winners) {
-          Object.entries(g.winners).forEach(([player, wins]) => {
-            scores[player] = (scores[player] || 0) + wins;
-          });
-        }
-      });
-
-      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-
-      if (sorted.length === 0) {
-        container.innerHTML = '<div class="text-center py-6 text-slate-500 text-sm">Nessuna vittoria registrata nei giochi.</div>';
-      } else {
-        sorted.forEach(([player, wins], idx) => {
-          const medal = idx === 0 ? '🥇 1°' : idx === 1 ? '🥈 2°' : idx === 2 ? '🥉 3°' : `${idx + 1}°`;
-          const item = document.createElement('div');
-          item.className = "flex justify-between items-center bg-slate-800/80 p-3 rounded-xl border border-slate-700/60";
-          item.innerHTML = `
-            <div class="flex items-center gap-2">
-              <span class="font-black text-xs px-2 py-0.5 bg-slate-900 rounded-md text-amber-300">${medal}</span>
-              <span class="font-bold text-white text-sm">${player}</span>
-            </div>
-            <span class="text-sm font-black text-amber-400">${wins} 🏆</span>
-          `;
-          container.appendChild(item);
-        });
-      }
-
-      document.getElementById('leaderboardModal').classList.remove('hidden');
-      document.getElementById('leaderboardModal').classList.add('flex');
-    }
-
-    function closeLeaderboardModal() {
-      document.getElementById('leaderboardModal').classList.add('hidden');
-      document.getElementById('leaderboardModal').classList.remove('flex');
-    }
-
-    function closeDetailModal() {
-      document.getElementById('detailModal').classList.add('hidden');
-      document.getElementById('detailModal').classList.remove('flex');
-    }
-
-    function openModal(isEdit = false) {
-      document.getElementById('formModal').classList.remove('hidden');
-      document.getElementById('formModal').classList.add('flex');
-      document.getElementById('bggResultsDropdown').classList.add('hidden');
-      
-      if (!isEdit) {
-        document.getElementById('gameForm').reset();
-        document.getElementById('gameId').value = '';
-        document.getElementById('formImageUrl').value = '';
-        document.getElementById('bggSearchInput').value = '';
-        clearCoverPreview();
-        document.getElementById('formTitle').innerText = 'Aggiungi Gioco';
-        setFormRating(5);
-      }
-    }
-
-    function closeFormModal() {
-      document.getElementById('formModal').classList.add('hidden');
-      document.getElementById('formModal').classList.remove('flex');
-    }
-
-    function setFormRating(val) {
-      document.getElementById('formRating').value = val;
-      const stars = document.getElementById('starPicker').children;
-      for (let i = 0; i < 5; i++) {
-        stars[i].className = i < val ? 'star-btn text-amber-400' : 'star-btn text-slate-600';
-      }
-    }
-
-    function editCurrentGame() {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      closeDetailModal();
-      openModal(true);
-
-      document.getElementById('formTitle').innerText = 'Modifica Gioco';
-      document.getElementById('gameId').value = game.id;
-      document.getElementById('bggSearchInput').value = game.name;
-      document.getElementById('formName').value = game.name;
-      document.getElementById('formCategory').value = game.category || '';
-      document.getElementById('formDifficulty').value = game.difficulty || 'Normale';
-      document.getElementById('formPlayers').value = game.players || '';
-      document.getElementById('formTime').value = game.time || '';
-      document.getElementById('formDesc').value = game.desc || '';
-      
-      if (game.image) {
-        document.getElementById('formImageUrl').value = game.image;
-        document.getElementById('formImagePreview').src = game.image;
-        document.getElementById('previewCoverContainer').classList.remove('hidden');
-        document.getElementById('previewCoverContainer').classList.add('flex');
-      } else {
-        clearCoverPreview();
-      }
-
-      setFormRating(game.rating || 5);
-    }
-
-    function deleteCurrentGame() {
-      if (!confirm('Vuoi davvero eliminare questo gioco?')) return;
-      games = games.filter(g => g.id !== currentSelectedId);
-      saveToStorage();
-      closeDetailModal();
-    }
-
-    async function saveGame(e) {
-      e.preventDefault();
-      const id = document.getElementById('gameId').value || Date.now().toString();
-      const fileInput = document.getElementById('formImageFile');
-      let imgData = document.getElementById('formImageUrl').value;
-
-      if (fileInput.files && fileInput.files[0]) {
-        imgData = await toBase64(fileInput.files[0]);
-      }
-
-      const existingGame = games.find(g => g.id === id);
-
-      const gameObj = {
-        id: id,
-        name: document.getElementById('formName').value,
-        category: document.getElementById('formCategory').value,
-        difficulty: document.getElementById('formDifficulty').value,
-        players: document.getElementById('formPlayers').value,
-        time: document.getElementById('formTime').value,
-        rating: parseInt(document.getElementById('formRating').value),
-        plays: existingGame ? existingGame.plays : 0,
-        winners: existingGame ? existingGame.winners : {},
-        desc: document.getElementById('formDesc').value,
-        comment: existingGame ? existingGame.comment : '',
-        image: imgData
-      };
-
-      const idx = games.findIndex(g => g.id === id);
-      if (idx >= 0) games[idx] = gameObj;
-      else games.push(gameObj);
-
-      saveToStorage();
-      closeFormModal();
-      if (currentSelectedId === id) openDetailModal(id);
-    }
-
-    const toBase64 = file => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-
-    function exportData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(games));
-      const a = document.createElement('a');
-      a.href = dataStr;
-      a.download = "ludoteca_backup.json";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-
-    function importData(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        try {
-          games = JSON.parse(event.target.result);
-          saveToStorage();
-          alert('Dati importati con successo!');
-        } catch (err) {
-          alert('File JSON non valido.');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    updateCategoryDropdown();
-    renderGames();
-  </script>
-</body>
-</html>
 </html>
