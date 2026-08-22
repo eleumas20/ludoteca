@@ -65,7 +65,18 @@
           <button type="button" id="sortOrderBtn" onclick="toggleSortOrder()" title="Inverti Ordinamento" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-indigo-300 px-3 py-2 rounded-lg font-bold text-sm active:scale-95 flex items-center justify-center shrink-0 cursor-pointer">
             <span id="sortOrderIcon">▲</span>
           </button>
+
+          <!-- Toggle Vista Compatta / Standard -->
+          <button type="button" id="viewModeBtn" onclick="toggleViewMode()" title="Cambia Vista (Standard / Compatta)" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-2.5 py-2 rounded-lg font-bold text-xs active:scale-95 flex items-center justify-center shrink-0 cursor-pointer">
+            <span id="viewModeIcon">🔲</span>
+          </button>
         </div>
+      </div>
+
+      <!-- Contatore Dinamico & Stato Filtri -->
+      <div class="flex justify-between items-center px-1 text-xs text-slate-400 border-t border-slate-800/80 pt-2">
+        <div id="statsCounter" class="font-medium">Caricamento contatore...</div>
+        <div id="activeFiltersSummary" class="text-indigo-400 font-semibold"></div>
       </div>
 
       <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
@@ -77,7 +88,7 @@
   </header>
 
   <!-- Griglia Card -->
-  <main class="max-w-4xl mx-auto px-4 mt-6">
+  <main class="max-w-4xl mx-auto px-4 mt-4">
     <div id="gamesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
     <div id="emptyState" class="hidden text-center py-16 text-slate-500">
       <p class="text-4xl mb-2">🎲</p>
@@ -330,6 +341,7 @@
 
     let sortAscending = true;
     let selectedTags = [];
+    let isCompactView = false;
 
     const STANDARD_TAGS = [
       "Party Game",
@@ -392,6 +404,13 @@
       renderGames();
     }
 
+    function toggleViewMode() {
+      isCompactView = !isCompactView;
+      const icon = document.getElementById('viewModeIcon');
+      if (icon) icon.innerText = isCompactView ? '📑' : '🔲';
+      renderGames();
+    }
+
     function toggleTagFilter(tag) {
       if (selectedTags.includes(tag)) {
         selectedTags = selectedTags.filter(t => t !== tag);
@@ -444,6 +463,26 @@
       return map[diff] || 2;
     }
 
+    function updateStatsCounter(totalCount, filteredCount) {
+      const statsEl = document.getElementById('statsCounter');
+      const filterSummaryEl = document.getElementById('activeFiltersSummary');
+      if (!statsEl) return;
+
+      const bases = games.filter(g => (g.itemType || 'base') === 'base').length;
+      const expansions = games.length - bases;
+      const unplayed = games.filter(g => !g.plays || g.plays === 0).length;
+
+      statsEl.innerHTML = `Libreria: <strong class="text-white">${games.length}</strong> tit. <span class="text-slate-500">(${bases} base, ${expansions} esp. | 🏷️ ${unplayed} mai giocati)</span>`;
+
+      if (filterSummaryEl) {
+        if (filteredCount !== games.length) {
+          filterSummaryEl.innerText = `Visualizzati: ${filteredCount}`;
+        } else {
+          filterSummaryEl.innerText = '';
+        }
+      }
+    }
+
     function renderGames() {
       const grid = document.getElementById('gamesGrid');
       const searchInput = document.getElementById('searchInput');
@@ -483,7 +522,13 @@
         return sortAscending ? res : -res;
       });
 
+      updateStatsCounter(games.length, filtered.length);
+
       if (!grid) return;
+      grid.className = isCompactView 
+        ? "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5" 
+        : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4";
+      
       grid.innerHTML = '';
       const emptyState = document.getElementById('emptyState');
       if (emptyState) emptyState.classList.toggle('hidden', filtered.length > 0);
@@ -496,37 +541,55 @@
         const totalWins = game.winners ? Object.values(game.winners).reduce((a, b) => a + b, 0) : 0;
         const typeInfo = getTypeBadge(game.itemType || 'base');
         const attachedExpCount = games.filter(e => e.parentGameId === game.id).length;
+        const hasNotes = game.comment && game.comment.trim().length > 0;
+        const isUnplayed = !game.plays || game.plays === 0;
 
-        card.innerHTML = `
-          <div class="relative aspect-square bg-slate-800 overflow-hidden flex items-center justify-center">
-            ${game.image ? 
-              `<img referrerpolicy="no-referrer" src="${game.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="${game.name}">` :
-              `<div class="flex flex-col items-center justify-center text-slate-600 p-2 text-center">
-                 <span class="text-3xl mb-1">🎲</span>
-                 <span class="text-[10px] font-semibold text-slate-500 line-clamp-2">${game.name}</span>
-               </div>`
-            }
-            <div class="absolute top-2 right-2 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded text-[11px] font-bold text-amber-400">
-              ⭐ ${game.rating || 5}
+        if (isCompactView) {
+          card.innerHTML = `
+            <div class="relative aspect-square bg-slate-800 overflow-hidden flex items-center justify-center">
+              ${game.image ? 
+                `<img referrerpolicy="no-referrer" src="${game.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="${game.name}">` :
+                `<span class="text-2xl">🎲</span>`
+              }
+              <div class="absolute top-1 right-1 bg-black/70 backdrop-blur-md px-1 rounded text-[10px] font-bold text-amber-400">⭐${game.rating || 5}</div>
+              ${isUnplayed ? '<div class="absolute bottom-1 left-1 bg-rose-950/80 text-rose-300 px-1 rounded text-[9px] font-bold">Mai giocato</div>' : ''}
             </div>
-            <div class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9px] font-bold ${typeInfo.class}">
-              ${typeInfo.label}
+            <div class="p-2">
+              <h3 class="font-bold text-xs text-white truncate">${game.name}</h3>
             </div>
-            ${game.difficulty ? `<div class="absolute bottom-2 left-2 px-1.5 py-0.5 rounded text-[10px] font-bold ${getDifficultyBadge(game.difficulty)}">${game.difficulty}</div>` : ''}
-            ${game.time ? `<div class="absolute bottom-2 right-2 bg-slate-950/80 backdrop-blur-sm px-1.5 py-0.5 rounded text-[10px] font-medium text-slate-300">⏱️ ${game.time}</div>` : ''}
-          </div>
-          <div class="p-3 flex flex-col flex-1 justify-between">
-            <div>
-              <h3 class="font-bold text-sm text-white truncate">${game.name}</h3>
-              <p class="text-[11px] text-slate-400 truncate">${game.category || 'Generico'}</p>
-              ${attachedExpCount > 0 ? `<span class="inline-block mt-1 text-[10px] bg-indigo-900/50 text-indigo-300 px-1.5 py-0.5 rounded font-semibold border border-indigo-700/50">+${attachedExpCount} Espansioni</span>` : ''}
+          `;
+        } else {
+          card.innerHTML = `
+            <div class="relative aspect-square bg-slate-800 overflow-hidden flex items-center justify-center">
+              ${game.image ? 
+                `<img referrerpolicy="no-referrer" src="${game.image}" class="w-full h-full object-cover group-hover:scale-105 transition duration-300" alt="${game.name}">` :
+                `<div class="flex flex-col items-center justify-center text-slate-600 p-2 text-center">
+                   <span class="text-3xl mb-1">🎲</span>
+                   <span class="text-[10px] font-semibold text-slate-500 line-clamp-2">${game.name}</span>
+                 </div>`
+              }
+              <div class="absolute top-2 right-2 bg-black/70 backdrop-blur-md px-1.5 py-0.5 rounded text-[11px] font-bold text-amber-400">
+                ⭐ ${game.rating || 5}
+              </div>
+              <div class="absolute top-2 left-2 px-1.5 py-0.5 rounded text-[9px] font-bold ${typeInfo.class}">
+                ${typeInfo.label}
+              </div>
+              ${isUnplayed ? '<div class="absolute bottom-2 left-2 bg-rose-950/90 text-rose-300 border border-rose-800 px-1.5 py-0.5 rounded text-[9px] font-bold shadow">⚠️ Mai giocato</div>' : ''}
+              ${hasNotes ? '<div class="absolute bottom-2 right-2 bg-indigo-950/90 text-indigo-300 border border-indigo-800 px-1.5 py-0.5 rounded text-[9px] font-bold shadow">📝 Note</div>' : ''}
             </div>
-            <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
-              <span>🎮 ${game.plays || 0}</span>
-              <span>🏆 ${totalWins}</span>
+            <div class="p-3 flex flex-col flex-1 justify-between">
+              <div>
+                <h3 class="font-bold text-sm text-white truncate">${game.name}</h3>
+                <p class="text-[11px] text-slate-400 truncate">${game.category || 'Generico'}</p>
+                ${attachedExpCount > 0 ? `<span class="inline-block mt-1 text-[10px] bg-indigo-900/50 text-indigo-300 px-1.5 py-0.5 rounded font-semibold border border-indigo-700/50">+${attachedExpCount} Espansioni</span>` : ''}
+              </div>
+              <div class="flex justify-between items-center mt-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
+                <span>🎮 ${game.plays || 0}</span>
+                <span>🏆 ${totalWins}</span>
+              </div>
             </div>
-          </div>
-        `;
+          `;
+        }
         grid.appendChild(card);
       });
     }
@@ -601,7 +664,6 @@
       }
     }
 
-    // Funzione per comprimere e ridimensionare immagini locali per evitare il limite di storage
     function resizeImage(file, maxWidth, maxHeight, quality) {
       return new Promise((resolve) => {
         const reader = new FileReader();
@@ -726,7 +788,7 @@ Struttura JSON:
       }
 
       if (!rawText) {
-        alert("Attendi qualche secondo: " + (lastError || "Limite momentaneo raggiunto"));
+        alert("Attendi qualche secondo o supera il limite di frequenza: " + (lastError || "Limite raggiunto"));
         if (btn) {
           btn.innerHTML = '<span>✨</span> Compila';
           btn.disabled = false;
@@ -1216,13 +1278,6 @@ Struttura JSON:
         alert("Errore durante il salvataggio: " + err.message);
       }
     }
-
-    const toBase64 = file => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
 
     function exportData() {
       const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(games));
