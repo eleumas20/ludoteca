@@ -9,6 +9,9 @@
     body { -webkit-tap-highlight-color: transparent; }
     .star-btn { cursor: pointer; transition: transform 0.15s; }
     .star-btn:active { transform: scale(1.3); }
+    /* Nascondi scrollbar per i tag ma mantieni lo scroll orizzontale fluido */
+    .no-scrollbar::-webkit-scrollbar { display: none; }
+    .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
   </style>
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen pb-24 font-sans antialiased selection:bg-indigo-500 selection:text-white">
@@ -276,7 +279,7 @@
         <div class="grid grid-cols-2 gap-2">
           <div>
             <label class="text-xs font-semibold text-slate-400 block mb-1">Genere / Categorie (Separate da virgola)</label>
-            <input type="text" id="formCategory" placeholder="es. Gestionale, Deck Building, Cooperativo" class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white">
+            <input type="text" id="formCategory" placeholder="es. Gestionale, Deck Building" class="w-full bg-slate-800 text-sm rounded-lg px-3 py-2 border border-slate-700 text-white">
           </div>
           <div>
             <label class="text-xs font-semibold text-slate-400 block mb-1">Difficoltà</label>
@@ -330,7 +333,6 @@
     let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
     let currentSelectedId = null;
 
-    // Stato Ordinamento & Filtro Tag
     let sortAscending = true;
     let selectedTags = [];
 
@@ -380,7 +382,7 @@
     function toggleSortOrder() {
       sortAscending = !sortAscending;
       document.getElementById('sortOrderIcon').innerText = sortAscending ? '▲' : '▼';
-      document.getElementById('sortOrderBtn').title = sortAscending ? 'Ordinamento: Crescente (A-Z, 1-9)' : 'Ordinamento: Decrescente (Z-A, 9-1)';
+      document.getElementById('sortOrderBtn').title = sortAscending ? 'Ordinamento: Crescente' : 'Ordinamento: Decrescente';
       renderGames();
     }
 
@@ -403,6 +405,7 @@
     function renderTagFilters() {
       const container = document.getElementById('tagFiltersContainer');
       const clearBtn = document.getElementById('clearTagsBtn');
+      if (!container) return;
       container.innerHTML = '';
 
       STANDARD_TAGS.forEach(tag => {
@@ -419,7 +422,7 @@
         container.appendChild(btn);
       });
 
-      clearBtn.classList.toggle('hidden', selectedTags.length === 0);
+      if (clearBtn) clearBtn.classList.toggle('hidden', selectedTags.length === 0);
     }
 
     function parseNumericMinutes(timeStr) {
@@ -452,15 +455,12 @@
                               (g.category && g.category.toLowerCase().includes(search));
         
         const matchesType = !filterType || itemType === filterType;
-
-        // Filtro Multiplo per Tag (Modalità AND: devono essere tutti presenti nel campo categoria)
         const gameCategory = (g.category || '').toLowerCase();
         const matchesTags = selectedTags.length === 0 || selectedTags.every(t => gameCategory.includes(t.toLowerCase()));
 
         return matchesSearch && matchesType && matchesTags;
       });
 
-      // Logica di Ordinamento Unificata con Direzione Ascendente/Discendente
       filtered.sort((a, b) => {
         let res = 0;
         if (sortBy === 'name') {
@@ -638,9 +638,9 @@ Struttura JSON:
 }`;
 
       const candidateModels = [
-        "gemini-3.6-flash",
-        "gemini-1.5-flash",
-        "gemini-1.5-pro"
+        "gemini-3.5-flash",
+        "gemini-3.1-flash-lite",
+        "gemini-1.5-flash"
       ];
 
       let rawText = null;
@@ -679,449 +679,4 @@ Struttura JSON:
       }
 
       try {
-        rawText = rawText.replace(/```json/g, '').replace(/```/g, '').trim();
-        const gameData = JSON.parse(rawText);
-
-        const finalName = gameData.name || query;
-        document.getElementById('formName').value = finalName;
-        document.getElementById('formCategory').value = gameData.category || 'Strategia';
-        document.getElementById('formDifficulty').value = ['Facile','Normale','Difficile','Estrema'].includes(gameData.difficulty) ? gameData.difficulty : 'Normale';
-        document.getElementById('formPlayers').value = gameData.players || '2-4 Giocatori';
-        document.getElementById('formTime').value = gameData.time || '45-60 min';
-        document.getElementById('formDesc').value = gameData.desc || '';
-
-        const detectedType = ['base', 'expansion', 'standalone'].includes(gameData.itemType) ? gameData.itemType : 'base';
-        document.getElementById('formItemType').value = detectedType;
-        toggleParentGameSelector();
-
-        if (detectedType === 'expansion' && gameData.parentGameName) {
-          const matchedParent = games.find(g => (g.itemType || 'base') === 'base' && g.name.toLowerCase().includes(gameData.parentGameName.toLowerCase()));
-          if (matchedParent) {
-            document.getElementById('formParentGameId').value = matchedParent.id;
-          }
-        }
-
-        updateGoogleSearchButton();
-
-      } catch (err) {
-        alert("Errore nell'interpretazione dei dati: " + err.message);
-      } finally {
-        btn.innerHTML = '<span>✨</span> Compila';
-        btn.disabled = false;
-      }
-    }
-
-    function getDifficultyBadge(diff) {
-      if (diff === 'Facile') return 'bg-emerald-950 text-emerald-300 border border-emerald-800';
-      if (diff === 'Difficile') return 'bg-amber-950 text-amber-300 border border-amber-800';
-      if (diff === 'Estrema') return 'bg-rose-950 text-rose-300 border border-rose-800';
-      return 'bg-blue-950 text-blue-300 border border-blue-800';
-    }
-
-    function getTypeBadge(type) {
-      if (type === 'expansion') return { label: '🧩 Espansione', class: 'bg-amber-950/80 text-amber-300 border border-amber-700/60' };
-      if (type === 'standalone') return { label: '⚡ Standalone', class: 'bg-purple-950/80 text-purple-300 border border-purple-700/60' };
-      return { label: '🎲 Base', class: 'bg-indigo-950/80 text-indigo-300 border border-indigo-700/60' };
-    }
-
-    function clearCoverPreview() {
-      document.getElementById('formImageUrl').value = '';
-      document.getElementById('formImageUrlInput').value = '';
-      document.getElementById('formImageFile').value = '';
-      const previewContainer = document.getElementById('previewCoverContainer');
-      if (previewContainer) {
-        previewContainer.classList.add('hidden');
-        previewContainer.classList.remove('flex');
-      }
-    }
-
-    function openDetailModal(id) {
-      const game = games.find(g => g.id === id);
-      if (!game) return;
-      currentSelectedId = id;
-      if (!game.winners) game.winners = {};
-
-      const itemType = game.itemType || 'base';
-      const typeInfo = getTypeBadge(itemType);
-
-      document.getElementById('detailTitle').innerText = game.name;
-      document.getElementById('detailCategory').innerText = game.category || 'Generico';
-      
-      const typeBadgeEl = document.getElementById('detailTypeBadge');
-      typeBadgeEl.innerText = typeInfo.label;
-      typeBadgeEl.className = `text-xs font-semibold px-2 py-0.5 rounded-md ${typeInfo.class}`;
-
-      const parentIndicator = document.getElementById('detailParentGameIndicator');
-      if (itemType === 'expansion' && game.parentGameId) {
-        const parent = games.find(g => g.id === game.parentGameId);
-        if (parent) {
-          parentIndicator.innerText = `Richiede il gioco base: "${parent.name}"`;
-          parentIndicator.classList.remove('hidden');
-        } else {
-          parentIndicator.classList.add('hidden');
-        }
-      } else {
-        parentIndicator.classList.add('hidden');
-      }
-
-      const expContainer = document.getElementById('detailExpansionsContainer');
-      const expList = document.getElementById('detailExpansionsList');
-      const attachedExpansions = games.filter(e => e.parentGameId === game.id);
-
-      if (itemType === 'base' && attachedExpansions.length > 0) {
-        document.getElementById('detailExpansionsCount').innerText = attachedExpansions.length;
-        expList.innerHTML = attachedExpansions.map(exp => `
-          <div onclick="openDetailModal('${exp.id}')" class="flex justify-between items-center bg-slate-900/80 px-2.5 py-1.5 rounded-lg text-xs cursor-pointer hover:bg-slate-700 transition border border-slate-700/50">
-            <span class="font-bold text-white">${exp.name}</span>
-            <span class="text-amber-400 font-semibold">⭐ ${exp.rating || 5} ➔</span>
-          </div>
-        `).join('');
-        expContainer.classList.remove('hidden');
-      } else {
-        expContainer.classList.add('hidden');
-      }
-
-      const diffEl = document.getElementById('detailDifficulty');
-      if (game.difficulty) {
-        diffEl.innerText = game.difficulty;
-        diffEl.className = `text-xs font-semibold px-2 py-0.5 rounded-md ${getDifficultyBadge(game.difficulty)}`;
-        diffEl.classList.remove('hidden');
-      } else {
-        diffEl.classList.add('hidden');
-      }
-
-      document.getElementById('detailPlayersTime').innerText = `👥 ${game.players || 'N/D'} | ⏱️ ${game.time || 'N/D'}`;
-      
-      const imgEl = document.getElementById('detailImg');
-      const placeholderEl = document.getElementById('detailImgPlaceholder');
-      if (game.image) {
-        imgEl.src = game.image;
-        imgEl.classList.remove('hidden');
-        placeholderEl.classList.add('hidden');
-      } else {
-        imgEl.classList.add('hidden');
-        placeholderEl.classList.remove('hidden');
-      }
-
-      document.getElementById('detailPlays').innerText = game.plays || 0;
-      document.getElementById('detailDesc').innerText = game.desc || 'Nessuna descrizione presente.';
-      document.getElementById('detailCommentInput').value = game.comment || '';
-
-      renderDetailRatingStars(game.rating || 5);
-      renderGameLeaderboard(game);
-
-      const modal = document.getElementById('detailModal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function renderDetailRatingStars(rating) {
-      const container = document.getElementById('detailStars');
-      container.innerHTML = '';
-      for (let i = 1; i <= 5; i++) {
-        const span = document.createElement('span');
-        span.innerText = '★';
-        span.className = `star-btn ${i <= rating ? 'text-amber-400' : 'text-slate-600'}`;
-        span.onclick = () => {
-          const game = games.find(g => g.id === currentSelectedId);
-          if (!game) return;
-          game.rating = i;
-          renderDetailRatingStars(i);
-          saveToStorage();
-        };
-        container.appendChild(span);
-      }
-    }
-
-    function saveCommentDirectly() {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      game.comment = document.getElementById('detailCommentInput').value;
-      localStorage.setItem('boardgames_db', JSON.stringify(games));
-      
-      const ind = document.getElementById('commentSaveIndicator');
-      ind.classList.remove('hidden');
-      setTimeout(() => ind.classList.add('hidden'), 1500);
-    }
-
-    function adjustPlays(delta) {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      game.plays = Math.max(0, (game.plays || 0) + delta);
-      document.getElementById('detailPlays').innerText = game.plays;
-      saveToStorage();
-    }
-
-    function addWinnerScore() {
-      const input = document.getElementById('winnerNameInput');
-      const name = input.value.trim();
-      if (!name) return;
-
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      if (!game.winners) game.winners = {};
-
-      game.winners[name] = (game.winners[name] || 0) + 1;
-      game.plays = (game.plays || 0) + 1;
-      document.getElementById('detailPlays').innerText = game.plays;
-      input.value = '';
-
-      renderGameLeaderboard(game);
-      saveToStorage();
-    }
-
-    function renderGameLeaderboard(game) {
-      const list = document.getElementById('gameLeaderboardList');
-      list.innerHTML = '';
-      const entries = Object.entries(game.winners || {}).sort((a, b) => b[1] - a[1]);
-
-      if (entries.length === 0) {
-        list.innerHTML = '<span class="text-xs text-slate-500 italic">Nessuna vittoria registrata.</span>';
-        return;
-      }
-
-      entries.forEach(([player, wins], idx) => {
-        const medal = idx === 0 ? '🥇' : idx === 1 ? '🥈' : idx === 2 ? '🥉' : '👤';
-        const row = document.createElement('div');
-        row.className = "flex justify-between items-center bg-slate-900/60 px-2.5 py-1 rounded-lg text-xs border border-slate-800";
-        row.innerHTML = `
-          <span class="text-slate-300 font-medium">${medal} ${player}</span>
-          <div class="flex items-center gap-2">
-            <span class="font-bold text-amber-400">${wins} ${wins === 1 ? 'vittoria' : 'vittorie'}</span>
-            <button onclick="removeWin('${player}')" class="text-[10px] text-slate-500 hover:text-rose-400 px-1 font-bold">✕</button>
-          </div>
-        `;
-        list.appendChild(row);
-      });
-    }
-
-    function removeWin(player) {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game || !game.winners || !game.winners[player]) return;
-      game.winners[player]--;
-      if (game.winners[player] <= 0) delete game.winners[player];
-      renderGameLeaderboard(game);
-      saveToStorage();
-    }
-
-    function openLeaderboardModal() {
-      const container = document.getElementById('globalLeaderboardList');
-      container.innerHTML = '';
-
-      const scores = {};
-      games.forEach(g => {
-        if (g.winners) {
-          Object.entries(g.winners).forEach(([player, wins]) => {
-            scores[player] = (scores[player] || 0) + wins;
-          });
-        }
-      });
-
-      const sorted = Object.entries(scores).sort((a, b) => b[1] - a[1]);
-
-      if (sorted.length === 0) {
-        container.innerHTML = '<div class="text-center py-6 text-slate-500 text-sm">Nessuna vittoria registrata nei giochi.</div>';
-      } else {
-        sorted.forEach(([player, wins], idx) => {
-          const medal = idx === 0 ? '🥇 1°' : idx === 1 ? '🥈 2°' : idx === 2 ? '🥉 3°' : `${idx + 1}°`;
-          const item = document.createElement('div');
-          item.className = "flex justify-between items-center bg-slate-800/80 p-3 rounded-xl border border-slate-700/60";
-          item.innerHTML = `
-            <div class="flex items-center gap-2">
-              <span class="font-black text-xs px-2 py-0.5 bg-slate-900 rounded-md text-amber-300">${medal}</span>
-              <span class="font-bold text-white text-sm">${player}</span>
-            </div>
-            <span class="text-sm font-black text-amber-400">${wins} 🏆</span>
-          `;
-          container.appendChild(item);
-        });
-      }
-
-      const modal = document.getElementById('leaderboardModal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function closeLeaderboardModal() {
-      const modal = document.getElementById('leaderboardModal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function closeDetailModal() {
-      const modal = document.getElementById('detailModal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function openModal(isEdit = false) {
-      const modal = document.getElementById('formModal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      
-      if (!isEdit) {
-        document.getElementById('gameForm').reset();
-        document.getElementById('gameId').value = '';
-        document.getElementById('formImageUrl').value = '';
-        document.getElementById('formImageUrlInput').value = '';
-        document.getElementById('aiSearchInput').value = '';
-        document.getElementById('formItemType').value = 'base';
-        toggleParentGameSelector();
-        clearCoverPreview();
-        document.getElementById('formTitle').innerText = 'Aggiungi Gioco';
-        setFormRating(5);
-        updateGoogleSearchButton();
-      }
-    }
-
-    function closeFormModal() {
-      const modal = document.getElementById('formModal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function setFormRating(val) {
-      document.getElementById('formRating').value = val;
-      const stars = document.getElementById('starPicker').children;
-      for (let i = 0; i < 5; i++) {
-        stars[i].className = i < val ? 'star-btn text-amber-400' : 'star-btn text-slate-600';
-      }
-    }
-
-    function editCurrentGame() {
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
-      closeDetailModal();
-      openModal(true);
-
-      document.getElementById('formTitle').innerText = 'Modifica Gioco';
-      document.getElementById('gameId').value = game.id;
-      document.getElementById('aiSearchInput').value = game.name;
-      document.getElementById('formName').value = game.name;
-      document.getElementById('formItemType').value = game.itemType || 'base';
-      toggleParentGameSelector();
-      
-      const parentSelect = document.getElementById('formParentGameId');
-      if (parentSelect && game.parentGameId) {
-        parentSelect.value = game.parentGameId;
-      }
-
-      document.getElementById('formCategory').value = game.category || '';
-      document.getElementById('formDifficulty').value = game.difficulty || 'Normale';
-      document.getElementById('formPlayers').value = game.players || '';
-      document.getElementById('formTime').value = game.time || '';
-      document.getElementById('formDesc').value = game.desc || '';
-      
-      if (game.image) {
-        document.getElementById('formImageUrl').value = game.image;
-        document.getElementById('formImagePreview').src = game.image;
-        if (game.image.startsWith('http')) {
-          document.getElementById('formImageUrlInput').value = game.image;
-        }
-        const previewContainer = document.getElementById('previewCoverContainer');
-        previewContainer.classList.remove('hidden');
-        previewContainer.classList.add('flex');
-      } else {
-        clearCoverPreview();
-      }
-
-      setFormRating(game.rating || 5);
-      updateGoogleSearchButton();
-    }
-
-    function deleteCurrentGame() {
-      if (!confirm('Vuoi davvero eliminare questo gioco?')) return;
-      games = games.filter(g => g.id !== currentSelectedId);
-      games.forEach(g => {
-        if (g.parentGameId === currentSelectedId) g.parentGameId = null;
-      });
-      saveToStorage();
-      closeDetailModal();
-    }
-
-    async function saveGame(e) {
-      e.preventDefault();
-      try {
-        const id = document.getElementById('gameId').value || Date.now().toString();
-        const fileInput = document.getElementById('formImageFile');
-        let imgData = document.getElementById('formImageUrl').value || '';
-
-        if (fileInput && fileInput.files && fileInput.files[0]) {
-          imgData = await toBase64(fileInput.files[0]);
-        }
-
-        const existingGame = games.find(g => g.id === id);
-        const itemType = document.getElementById('formItemType').value || 'base';
-        const parentGameId = itemType === 'expansion' ? (document.getElementById('formParentGameId')?.value || null) : null;
-        const finalName = document.getElementById('formName').value.trim();
-
-        const gameObj = {
-          id: id,
-          name: finalName,
-          itemType: itemType,
-          parentGameId: parentGameId,
-          category: document.getElementById('formCategory').value || 'Generico',
-          difficulty: document.getElementById('formDifficulty').value || 'Normale',
-          players: document.getElementById('formPlayers').value || 'N/D',
-          time: document.getElementById('formTime').value || 'N/D',
-          rating: parseInt(document.getElementById('formRating').value) || 5,
-          plays: existingGame ? (existingGame.plays || 0) : 0,
-          winners: existingGame ? (existingGame.winners || {}) : {},
-          desc: document.getElementById('formDesc').value || '',
-          comment: existingGame ? (existingGame.comment || '') : '',
-          image: imgData
-        };
-
-        const idx = games.findIndex(g => g.id === id);
-        if (idx >= 0) {
-          games[idx] = gameObj;
-        } else {
-          games.push(gameObj);
-        }
-
-        saveToStorage();
-        closeFormModal();
-        if (currentSelectedId === id) openDetailModal(id);
-      } catch (err) {
-        alert("Errore durante il salvataggio: " + err.message);
-      }
-    }
-
-    const toBase64 = file => new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = error => reject(error);
-    });
-
-    function exportData() {
-      const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(games));
-      const a = document.createElement('a');
-      a.href = dataStr;
-      a.download = "ludoteca_backup.json";
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-    }
-
-    function importData(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(event) {
-        try {
-          games = JSON.parse(event.target.result);
-          saveToStorage();
-          alert('Dati importati con successo!');
-        } catch (err) {
-          alert('File JSON non valido.');
-        }
-      };
-      reader.readAsText(file);
-    }
-
-    renderTagFilters();
-    renderGames();
-  </script>
-</body>
-</html>
+        rawText = rawText.replace(/```json/g, '').replace(/
