@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>I Miei Giochi da Tavolo</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Libreria leggera per generare il QR Code al volo -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
   <style>
     body { -webkit-tap-highlight-color: transparent; }
@@ -32,7 +31,6 @@
         </div>
       </div>
       <div id="headerActions" class="flex gap-2 items-center">
-        <!-- Pulsante QR Code -->
         <button type="button" onclick="openQrModal()" title="Condividi QR Code" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-emerald-300 border border-emerald-700/60 flex items-center gap-1 cursor-pointer">
           📱 <span class="hidden sm:inline">QR Code</span>
         </button>
@@ -49,7 +47,7 @@
       </div>
     </div>
 
-    <!-- Barra Ricerca, Filtri Avanzati & Ordinamento -->
+    <!-- Barra Ricerca, Filtri Avanzati "Da-A" & Ordinamento -->
     <div class="max-w-4xl mx-auto mt-3 space-y-2">
       <div class="flex flex-col sm:flex-row gap-2">
         <div class="relative flex-1">
@@ -70,22 +68,21 @@
             <option value="wishlist">⭐ Wishlist</option>
           </select>
 
-          <select id="filterPlayers" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
-            <option value="">👥 Quanti al tavolo?</option>
-            <option value="1">1 Giocatore</option>
-            <option value="2">2 Giocatori</option>
-            <option value="3">3 Giocatori</option>
-            <option value="4">4 Giocatori</option>
-            <option value="5">5+ Giocatori</option>
-          </select>
+          <!-- Filtri Range Da - A per Giocatori -->
+          <div class="flex items-center bg-slate-800 rounded-lg px-2 border border-slate-700 text-xs text-slate-300 gap-1">
+            <span>👥 Giocatori:</span>
+            <input type="number" id="filterPlayersFrom" min="1" max="20" placeholder="Da" oninput="renderGames()" class="w-10 bg-slate-900 text-white text-center rounded px-1 py-1 focus:outline-none focus:border-indigo-500">
+            <span>-</span>
+            <input type="number" id="filterPlayersTo" min="1" max="20" placeholder="A" oninput="renderGames()" class="w-10 bg-slate-900 text-white text-center rounded px-1 py-1 focus:outline-none focus:border-indigo-500">
+          </div>
 
-          <select id="filterMaxTime" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
-            <option value="">⏱️ Durata Max</option>
-            <option value="30">Fino a 30 min</option>
-            <option value="60">Fino a 60 min</option>
-            <option value="120">Fino a 120 min</option>
-            <option value="999">Oltre 2 ore</option>
-          </select>
+          <!-- Filtri Range Da - A per Durata (minuti) -->
+          <div class="flex items-center bg-slate-800 rounded-lg px-2 border border-slate-700 text-xs text-slate-300 gap-1">
+            <span>⏱️ Minuti:</span>
+            <input type="number" id="filterTimeFrom" min="0" max="600" placeholder="Da" oninput="renderGames()" class="w-12 bg-slate-900 text-white text-center rounded px-1 py-1 focus:outline-none focus:border-indigo-500">
+            <span>-</span>
+            <input type="number" id="filterTimeTo" min="0" max="600" placeholder="A" oninput="renderGames()" class="w-12 bg-slate-900 text-white text-center rounded px-1 py-1 focus:outline-none focus:border-indigo-500">
+          </div>
 
           <select id="sortBy" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
             <option value="name">Nome (A-Z)</option>
@@ -110,8 +107,9 @@
         <div id="activeFiltersSummary" class="text-indigo-400 font-semibold"></div>
       </div>
 
+      <!-- Tag Dinamici estratti dai tuoi giochi -->
       <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
-        <span class="text-[11px] font-bold text-slate-400 shrink-0 mr-1">Filtra per genere:</span>
+        <span class="text-[11px] font-bold text-slate-400 shrink-0 mr-1">Filtra per genere (dinamico):</span>
         <div id="tagFiltersContainer" class="flex gap-1.5"></div>
         <button type="button" id="clearTagsBtn" onclick="clearSelectedTags()" class="hidden text-[11px] text-rose-400 underline font-semibold shrink-0 ml-1 cursor-pointer">Azzera filtri</button>
       </div>
@@ -168,6 +166,14 @@
           <div id="detailExpansionsList" class="space-y-1.5"></div>
         </div>
 
+        <!-- Sezione Selezione Espansioni per la Partita Corrente (Solo per Giochi Base) -->
+        <div id="gameExpansionsSelectorSection" class="hidden bg-indigo-950/30 p-3.5 rounded-xl border border-indigo-800/60 space-y-2">
+          <h3 class="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
+            🧩 Includi Espansioni in questa Partita:
+          </h3>
+          <div id="gameExpansionsCheckboxes" class="space-y-1.5"></div>
+        </div>
+
         <div id="detailPlaysSection" class="bg-slate-800/60 p-4 rounded-xl border border-slate-700/50 space-y-3">
           <div class="flex items-center justify-between">
             <span class="text-sm font-bold text-indigo-300">🎮 Partite Giocate: <span id="detailPlays" class="text-white">0</span></span>
@@ -219,7 +225,7 @@
         <h2 class="text-lg font-bold text-white">📱 QR Code Sola Visione</h2>
         <button type="button" onclick="closeQrModal()" class="text-slate-400 hover:text-white text-lg font-bold cursor-pointer">✕</button>
       </div>
-      <p class="text-xs text-slate-400">Inquadra questo codice con lo smartphone per aprire la ludoteca in modalità di sola visualizzazione (senza modifiche):</p>
+      <p class="text-xs text-slate-400">Inquadra questo codice con lo smartphone per aprire la ludoteca in modalità di sola visualizzazione:</p>
       <div class="bg-white p-4 rounded-xl inline-block mx-auto shadow-inner" id="qrcodeContainer"></div>
       <p id="qrUrlText" class="text-[10px] text-indigo-400 break-all px-2"></p>
     </div>
@@ -423,28 +429,12 @@
     let voteCounts = {};
     let isReadonly = false;
 
-    const STANDARD_TAGS = [
-      "Party Game",
-      "Cooperativo",
-      "Competitivo",
-      "Deck Building",
-      "Gestionale",
-      "Strategia",
-      "Wargame",
-      "Deduzione",
-      "Piazzamento Lavoratori",
-      "Dadi",
-      "Carte"
-    ];
-
-    // Controllo se la pagina è aperta in modalità Sola Visione
     function checkReadonlyMode() {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('view') === 'readonly') {
         isReadonly = true;
         const headerActions = document.getElementById('headerActions');
         if (headerActions) {
-          // Lascia visibili solo i pulsanti di consultazione (es. Classifica, Stats, QR Code)
           headerActions.innerHTML = `
             <button type="button" onclick="openQrModal()" title="Condividi QR Code" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-emerald-300 border border-emerald-700/60 flex items-center gap-1 cursor-pointer">
               📱 <span class="hidden sm:inline">QR Code</span>
@@ -558,13 +548,34 @@
       renderGames();
     }
 
+    // Estrae dinamicamente tutti i generi unici presenti nella ludoteca
+    function getDynamicTags() {
+      const tagsSet = new Set();
+      games.forEach(g => {
+        if (g.category) {
+          g.category.split(',').forEach(part => {
+            const clean = part.trim();
+            if (clean) tagsSet.add(clean);
+          });
+        }
+      });
+      return Array.from(tagsSet).sort();
+    }
+
     function renderTagFilters() {
       const container = document.getElementById('tagFiltersContainer');
       const clearBtn = document.getElementById('clearTagsBtn');
       if (!container) return;
       container.innerHTML = '';
 
-      STANDARD_TAGS.forEach(tag => {
+      const dynamicTags = getDynamicTags();
+      if (dynamicTags.length === 0) {
+        container.innerHTML = '<span class="text-[11px] text-slate-500 italic">Nessun genere inserito nei giochi</span>';
+        if (clearBtn) clearBtn.classList.add('hidden');
+        return;
+      }
+
+      dynamicTags.forEach(tag => {
         const isSelected = selectedTags.includes(tag);
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -802,14 +813,18 @@
       const grid = document.getElementById('gamesGrid');
       const searchInput = document.getElementById('searchInput');
       const filterTypeInput = document.getElementById('filterType');
-      const filterPlayersInput = document.getElementById('filterPlayers');
-      const filterMaxTimeInput = document.getElementById('filterMaxTime');
+      const pFrom = document.getElementById('filterPlayersFrom');
+      const pTo = document.getElementById('filterPlayersTo');
+      const tFrom = document.getElementById('filterTimeFrom');
+      const tTo = document.getElementById('filterTimeTo');
       const sortByInput = document.getElementById('sortBy');
 
       const search = searchInput ? searchInput.value.toLowerCase() : '';
       const filterType = filterTypeInput ? filterTypeInput.value : '';
-      const filterPlayers = filterPlayersInput ? parseInt(filterPlayersInput.value) : 0;
-      const filterMaxTime = filterMaxTimeInput ? parseInt(filterMaxTimeInput.value) : 9999;
+      const playersFrom = pFrom && pFrom.value !== '' ? parseInt(pFrom.value) : null;
+      const playersTo = pTo && pTo.value !== '' ? parseInt(pTo.value) : null;
+      const timeFrom = tFrom && tFrom.value !== '' ? parseInt(tFrom.value) : null;
+      const timeTo = tTo && tTo.value !== '' ? parseInt(tTo.value) : null;
       const sortBy = sortByInput ? sortByInput.value : 'name';
 
       let filtered = games.filter(g => {
@@ -829,12 +844,18 @@
           matchesType = itemType === 'base';
         }
 
+        // Filtro Giocatori "Da - A"
         const minP = extractMinPlayers(g.players);
         const maxP = extractMaxPlayers(g.players);
-        const matchesPlayers = !filterPlayers || (filterPlayers >= minP && filterPlayers <= maxP);
+        let matchesPlayers = true;
+        if (playersFrom !== null && maxP < playersFrom) matchesPlayers = false;
+        if (playersTo !== null && minP > playersTo) matchesPlayers = false;
 
+        // Filtro Durata "Da - A" (minuti)
         const avgTime = parseNumericMinutes(g.time);
-        const matchesTime = !filterMaxTime || avgTime <= filterMaxTime;
+        let matchesTime = true;
+        if (timeFrom !== null && avgTime < timeFrom && avgTime > 0) matchesTime = false;
+        if (timeTo !== null && avgTime > timeTo) matchesTime = false;
 
         const gameCategory = (g.category || '').toLowerCase();
         const matchesTags = selectedTags.length === 0 || selectedTags.every(t => gameCategory.includes(t.toLowerCase()));
@@ -1078,14 +1099,14 @@ Identifica accuratamente la tipologia:
 - "expansion" se è un'espansione che richiede obbligatoriamente il gioco base;
 - "standalone" se è un'espansione/spin-off giocabile anche da sola senza il gioco base.
 
-Nel campo "category", includi 2 o 3 categorie/meccaniche pertinenti scegliendo prioritariamente tra: Party Game, Cooperativo, Competitivo, Deck Building, Gestionale, Strategia, Wargame, Deduzione, Piazzamento Lavoratori, Dadi, Carte.
+Nel campo "category", includi 2 o 3 categorie/meccaniche pertinenti (es. Cooperativo, Gestionale, Deck Building, Strategia, Party Game, Dadi, Carte).
 
 Struttura JSON:
 {
   "name": "Nome ufficiale completo",
   "itemType": "uno tra: base, expansion, standalone",
   "parentGameName": "Nome del gioco base necessario (solo se itemType è expansion, altrimenti stringa vuota)",
-  "category": "Categorie separate da virgola (es. Gestionale, Deck Building)",
+  "category": "Categorie separate da virgola",
   "difficulty": "Uno tra: Facile, Normale, Difficile, Estrema",
   "players": "es. 2-4 Giocatori",
   "time": "es. 60-90 min",
@@ -1197,6 +1218,7 @@ Struttura JSON:
       if (!game) return;
       currentSelectedId = id;
       if (!game.winners) game.winners = {};
+      if (!game.usedExpansions) game.usedExpansions = {};
 
       const itemType = game.itemType || 'base';
       const typeInfo = getTypeBadge(itemType);
@@ -1241,6 +1263,24 @@ Struttura JSON:
         expContainer.classList.add('hidden');
       }
 
+      // Sezione Checkbox Espansioni utilizzabili per il Gioco Base
+      const gameExpSec = document.getElementById('gameExpansionsSelectorSection');
+      const gameExpChecks = document.getElementById('gameExpansionsCheckboxes');
+      if (itemType === 'base' && attachedExpansions.length > 0 && gameExpSec && gameExpChecks) {
+        gameExpChecks.innerHTML = attachedExpansions.map(exp => {
+          const isChecked = game.usedExpansions && game.usedExpansions[exp.id];
+          return `
+            <label class="flex items-center gap-2 text-xs text-slate-200 cursor-pointer bg-slate-900/60 p-2 rounded-lg border border-slate-800">
+              <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleUsedExpansion('${game.id}', '${exp.id}', this.checked)" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-0">
+              <span class="font-semibold">${exp.name}</span>
+            </label>
+          `;
+        }).join('');
+        gameExpSec.classList.remove('hidden');
+      } else if (gameExpSec) {
+        gameExpSec.classList.add('hidden');
+      }
+
       const diffEl = document.getElementById('detailDifficulty');
       if (game.difficulty && diffEl) {
         diffEl.innerText = game.difficulty;
@@ -1273,7 +1313,6 @@ Struttura JSON:
       const commentEl = document.getElementById('detailCommentInput');
       if (commentEl) commentEl.value = game.comment || '';
 
-      // Adattamento visivo in sola visione
       if (isReadonly) {
         const starsLabel = document.getElementById('detailStarsLabel');
         if (starsLabel) starsLabel.innerText = "Voto";
@@ -1283,6 +1322,7 @@ Struttura JSON:
         if (commSec) commSec.classList.add('hidden');
         const actBtns = document.getElementById('detailActionButtons');
         if (actBtns) actBtns.classList.add('hidden');
+        if (gameExpSec) gameExpSec.classList.add('hidden');
       }
 
       renderDetailRatingStars(game.rating || 5);
@@ -1293,6 +1333,15 @@ Struttura JSON:
         modal.classList.remove('hidden');
         modal.classList.add('flex');
       }
+    }
+
+    function toggleUsedExpansion(gameId, expId, isChecked) {
+      if (isReadonly) return;
+      const game = games.find(g => g.id === gameId);
+      if (!game) return;
+      if (!game.usedExpansions) game.usedExpansions = {};
+      game.usedExpansions[expId] = isChecked;
+      saveToStorage();
     }
 
     function renderDetailRatingStars(rating) {
@@ -1336,7 +1385,21 @@ Struttura JSON:
       if (isReadonly) return;
       const game = games.find(g => g.id === currentSelectedId);
       if (!game) return;
+      
       game.plays = Math.max(0, (game.plays || 0) + delta);
+
+      // Aggiornamento automatico delle partite sulle espansioni collegate e spuntate
+      if (delta > 0 && game.usedExpansions) {
+        Object.entries(game.usedExpansions).forEach(([expId, isUsed]) => {
+          if (isUsed) {
+            const expGame = games.find(e => e.id === expId);
+            if (expGame) {
+              expGame.plays = (expGame.plays || 0) + delta;
+            }
+          }
+        });
+      }
+
       const playsEl = document.getElementById('detailPlays');
       if (playsEl) playsEl.innerText = game.plays;
       saveToStorage();
@@ -1355,6 +1418,19 @@ Struttura JSON:
 
       game.winners[name] = (game.winners[name] || 0) + 1;
       game.plays = (game.plays || 0) + 1;
+
+      // Incrementa le partite anche per le espansioni usate in questa partita
+      if (game.usedExpansions) {
+        Object.entries(game.usedExpansions).forEach(([expId, isUsed]) => {
+          if (isUsed) {
+            const expGame = games.find(e => e.id === expId);
+            if (expGame) {
+              expGame.plays = (expGame.plays || 0) + 1;
+            }
+          }
+        });
+      }
+
       const playsEl = document.getElementById('detailPlays');
       if (playsEl) playsEl.innerText = game.plays;
       input.value = '';
@@ -1615,6 +1691,7 @@ Struttura JSON:
           rating: ratingEl ? parseInt(ratingEl.value) || 5 : 5,
           plays: existingGame ? (existingGame.plays || 0) : 0,
           winners: existingGame ? (existingGame.winners || {}) : {},
+          usedExpansions: existingGame ? (existingGame.usedExpansions || {}) : {},
           desc: descEl ? descEl.value || '' : '',
           comment: existingGame ? (existingGame.comment || '') : '',
           image: imgData
