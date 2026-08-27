@@ -18,36 +18,49 @@
 
   <!-- Header -->
   <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3 shadow-lg">
-    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
-      <div class="flex items-center justify-between w-full md:w-auto gap-2">
+    <div class="max-w-7xl mx-auto flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <!-- Pulsante Menu Laterale Smartphone -->
+        <button type="button" onclick="toggleSidebar(true)" class="md:hidden p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-slate-200 border border-slate-700 cursor-pointer">
+          ☰
+        </button>
         <h1 class="text-xl font-black bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">🎲 Ludoteca</h1>
-        <div class="flex gap-1.5">
-          <button type="button" onclick="openLeaderboardModal()" class="bg-amber-500/25 hover:bg-amber-500/35 text-amber-300 border border-amber-500/40 text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 active:scale-95 cursor-pointer">
+        <div class="hidden md:flex gap-1.5">
+          <button type="button" onclick="openLeaderboardModal()" class="bg-amber-500/25 hover:bg-amber-500/35 text-amber-300 border border-amber-500/40 text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 cursor-pointer">
             🏆 Classifica
           </button>
-          <button type="button" onclick="openStatsModal()" class="bg-indigo-500/25 hover:bg-indigo-500/35 text-indigo-300 border border-indigo-500/40 text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 active:scale-95 cursor-pointer">
+          <button type="button" onclick="openStatsModal()" class="bg-indigo-500/25 hover:bg-indigo-500/35 text-indigo-300 border border-indigo-500/40 text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 cursor-pointer">
             📊 Stats
           </button>
         </div>
       </div>
-      <div id="headerActions" class="flex flex-wrap gap-2 items-center justify-end">
-        <button type="button" onclick="openQrModal()" title="Condividi QR Code" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-emerald-300 border border-emerald-700/60 flex items-center gap-1 cursor-pointer">
-          📱 <span class="hidden sm:inline">QR Code</span>
+      
+      <!-- Azioni Desktop -->
+      <div id="headerActions" class="hidden md:flex gap-2 items-center">
+        <button type="button" onclick="openQrModal()" title="Condividi QR Code" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-emerald-300 border border-emerald-700/60 flex items-center gap-1 cursor-pointer">
+          📱 QR Code
         </button>
-        <button type="button" onclick="openApiKeyModal()" title="Imposta Chiave IA" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-indigo-300 border border-indigo-700/60 flex items-center gap-1 cursor-pointer">
-          🤖 <span class="hidden sm:inline">IA Config</span>
+        <button type="button" onclick="openApiKeyModal()" title="Imposta Chiave IA" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-indigo-300 border border-indigo-700/60 flex items-center gap-1 cursor-pointer">
+          🤖 IA Config
         </button>
-        <button type="button" onclick="exportData()" title="Backup" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-slate-300 border border-slate-700 cursor-pointer">💾 Salva</button>
-        <label title="Carica" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-slate-300 border border-slate-700 cursor-pointer">
+        <button type="button" onclick="exportData()" title="Backup" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-slate-300 border border-slate-700 cursor-pointer">💾 Salva</button>
+        <label title="Carica" class="p-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold text-slate-300 border border-slate-700 cursor-pointer">
           📂 Carica <input type="file" id="importInput" accept=".json" class="hidden" onchange="importData(event)">
         </label>
-        <button type="button" id="btnNewGame" onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1 cursor-pointer">
+        <button type="button" id="btnNewGame" onclick="openModal()" class="bg-indigo-600 hover:bg-indigo-500 text-white px-3 py-1.5 rounded-lg text-sm font-bold shadow-md shadow-indigo-600/30 flex items-center gap-1 cursor-pointer">
+          <span>+</span> Nuovo
+        </button>
+      </div>
+
+      <!-- Pulsante Nuovo rapido su Mobile -->
+      <div class="flex md:hidden items-center gap-2">
+        <button type="button" id="btnNewGameMobile" onclick="openModal()" class="bg-indigo-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold shadow-md flex items-center gap-1 cursor-pointer">
           <span>+</span> Nuovo
         </button>
       </div>
     </div>
 
-    <!-- Barra Ricerca, Filtri & Ordinamento -->
+    <!-- Barra Ricerca, Filtri Da-A & Ordinamento -->
     <div class="max-w-7xl mx-auto mt-3 space-y-2">
       <div class="flex flex-col lg:flex-row gap-2">
         <div class="relative flex-1">
@@ -56,11 +69,11 @@
         </div>
         
         <div class="flex flex-wrap gap-2 items-center">
-          <button type="button" onclick="openVotingModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md active:scale-95 cursor-pointer">
+          <button type="button" onclick="openVotingModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md cursor-pointer">
             🗳️ Vota Serata
           </button>
 
-          <select id="filterType" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
+          <select id="filterType" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 text-slate-300 cursor-pointer">
             <option value="">Tutti i formati</option>
             <option value="base">🎲 Giochi Base</option>
             <option value="standalone">⚡ Standalone</option>
@@ -68,7 +81,7 @@
             <option value="wishlist">⭐ Wishlist</option>
           </select>
 
-          <!-- Filtri Range Da - A per Giocatori -->
+          <!-- Filtro Range Da - A per Giocatori -->
           <div class="flex items-center bg-slate-800 rounded-lg px-2 border border-slate-700 text-xs text-slate-300 gap-1 py-1.5">
             <span>👥 Giocatori:</span>
             <input type="number" id="filterPlayersFrom" min="1" max="20" placeholder="Da" oninput="renderGames()" class="w-10 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
@@ -76,7 +89,7 @@
             <input type="number" id="filterPlayersTo" min="1" max="20" placeholder="A" oninput="renderGames()" class="w-10 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
           </div>
 
-          <!-- Filtri Range Da - A per Durata (minuti) -->
+          <!-- Filtro Range Da - A per Durata (minuti) -->
           <div class="flex items-center bg-slate-800 rounded-lg px-2 border border-slate-700 text-xs text-slate-300 gap-1 py-1.5">
             <span>⏱️ Minuti:</span>
             <input type="number" id="filterTimeFrom" min="0" max="600" placeholder="Da" oninput="renderGames()" class="w-12 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
@@ -84,7 +97,7 @@
             <input type="number" id="filterTimeTo" min="0" max="600" placeholder="A" oninput="renderGames()" class="w-12 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
           </div>
 
-          <select id="sortBy" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
+          <select id="sortBy" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 text-slate-300 cursor-pointer">
             <option value="name">Nome (A-Z)</option>
             <option value="rating">Voto ⭐</option>
             <option value="plays">Partite 🎮</option>
@@ -92,11 +105,11 @@
             <option value="difficulty">Difficoltà 🎯</option>
           </select>
 
-          <button type="button" id="sortOrderBtn" onclick="toggleSortOrder()" title="Inverti Ordinamento" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-indigo-300 px-3 py-2 rounded-lg font-bold text-sm active:scale-95 flex items-center justify-center shrink-0 cursor-pointer">
+          <button type="button" id="sortOrderBtn" onclick="toggleSortOrder()" title="Inverti Ordinamento" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-indigo-300 px-3 py-2 rounded-lg font-bold text-sm flex items-center justify-center shrink-0 cursor-pointer">
             <span id="sortOrderIcon">▲</span>
           </button>
 
-          <button type="button" id="viewModeBtn" onclick="toggleViewMode()" title="Cambia Vista" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-2.5 py-2 rounded-lg font-bold text-xs active:scale-95 flex items-center justify-center shrink-0 cursor-pointer">
+          <button type="button" id="viewModeBtn" onclick="toggleViewMode()" title="Cambia Vista" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-300 px-2.5 py-2 rounded-lg font-bold text-xs flex items-center justify-center shrink-0 cursor-pointer">
             <span id="viewModeIcon">🔲</span>
           </button>
         </div>
@@ -117,6 +130,41 @@
       </div>
     </div>
   </header>
+
+  <!-- Menu Laterale (Drawer) per Smartphone -->
+  <div id="sidebarDrawer" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden transition-opacity">
+    <div class="absolute left-0 top-0 bottom-0 w-72 bg-slate-900 border-r border-slate-800 p-5 flex flex-col justify-between shadow-2xl">
+      <div class="space-y-4">
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+          <h2 class="text-base font-black text-white">Opzioni Ludoteca</h2>
+          <button type="button" onclick="toggleSidebar(false)" class="text-slate-400 hover:text-white text-lg font-bold cursor-pointer">✕</button>
+        </div>
+        <div class="space-y-2">
+          <button type="button" onclick="toggleSidebar(false); openLeaderboardModal();" class="w-full text-left px-3 py-2.5 bg-amber-500/20 text-amber-300 border border-amber-500/30 rounded-xl font-bold text-xs flex items-center gap-2">
+            🏆 Classifica Globale
+          </button>
+          <button type="button" onclick="toggleSidebar(false); openStatsModal();" class="w-full text-left px-3 py-2.5 bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 rounded-xl font-bold text-xs flex items-center gap-2">
+            📊 Statistiche Ludoteca
+          </button>
+          <button type="button" onclick="toggleSidebar(false); openQrModal();" class="w-full text-left px-3 py-2.5 bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 rounded-xl font-bold text-xs flex items-center gap-2">
+            📱 Condividi QR Code
+          </button>
+          <button type="button" onclick="toggleSidebar(false); openApiKeyModal();" class="w-full text-left px-3 py-2.5 bg-slate-800 text-slate-200 border border-slate-700 rounded-xl font-semibold text-xs flex items-center gap-2">
+            🤖 Configura IA Gemini
+          </button>
+          <button type="button" onclick="toggleSidebar(false); exportData();" class="w-full text-left px-3 py-2.5 bg-slate-800 text-slate-200 border border-slate-700 rounded-xl font-semibold text-xs flex items-center gap-2">
+            💾 Salva Backup (JSON)
+          </button>
+          <label class="w-full block text-left px-3 py-2.5 bg-slate-800 text-slate-200 border border-slate-700 rounded-xl font-semibold text-xs cursor-pointer">
+            📂 Carica Backup <input type="file" accept=".json" class="hidden" onchange="toggleSidebar(false); importData(event);">
+          </label>
+        </div>
+      </div>
+      <div class="text-center text-[10px] text-slate-500 border-t border-slate-800 pt-3">
+        Ludoteca da Tavolo v3.5
+      </div>
+    </div>
+  </div>
 
   <!-- Griglia Card -->
   <main class="max-w-7xl mx-auto px-4 mt-6">
@@ -435,13 +483,19 @@
       if (urlParams.get('view') === 'readonly') {
         isReadonly = true;
         const headerActions = document.getElementById('headerActions');
-        if (headerActions) {
-          headerActions.innerHTML = `
-            <button type="button" onclick="openQrModal()" title="Condividi QR Code" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-emerald-300 border border-emerald-700/60 flex items-center gap-1 cursor-pointer">
-              📱 <span class="hidden sm:inline">QR Code</span>
-            </button>
-          `;
-        }
+        const btnMobile = document.getElementById('btnNewGameMobile');
+        if (headerActions) headerActions.innerHTML = '';
+        if (btnMobile) btnMobile.classList.add('hidden');
+      }
+    }
+
+    function toggleSidebar(show) {
+      const drawer = document.getElementById('sidebarDrawer');
+      if (!drawer) return;
+      if (show) {
+        drawer.classList.remove('hidden');
+      } else {
+        drawer.classList.add('hidden');
       }
     }
 
@@ -627,7 +681,7 @@
       return map[diff] || 2;
     }
 
-    // Estrazione rigorosa e intelligente dei giocatori (Gestisce formati come "3-4", "1 - 5 Giocatori", "2+")
+    // Parsing intelligente e robusto dei giocatori per il filtro Da-A
     function extractMinPlayers(playersStr) {
       if (!playersStr) return 1;
       const matches = playersStr.match(/\d+/g);
@@ -639,7 +693,6 @@
       if (!playersStr) return 99;
       const matches = playersStr.match(/\d+/g);
       if (!matches || matches.length === 0) return 99;
-      // Se c'è un secondo numero (es. 2-6), il massimo è quello. Se c'è un solo numero (es. 6), consideriamo quel numero come massimo.
       return parseInt(matches.length > 1 ? matches[1] : matches[0], 10);
     }
 
@@ -843,10 +896,10 @@
 
       const search = searchInput ? searchInput.value.toLowerCase() : '';
       const filterType = filterTypeInput ? filterTypeInput.value : '';
-      const playersFrom = pFrom && pFrom.value !== '' ? parseInt(pFrom.value) : null;
-      const playersTo = pTo && pTo.value !== '' ? parseInt(pTo.value) : null;
-      const timeFrom = tFrom && tFrom.value !== '' ? parseInt(tFrom.value) : null;
-      const timeTo = tTo && tTo.value !== '' ? parseInt(tTo.value) : null;
+      const playersFrom = pFrom && pFrom.value !== '' ? parseInt(pFrom.value, 10) : null;
+      const playersTo = pTo && pTo.value !== '' ? parseInt(pTo.value, 10) : null;
+      const timeFrom = tFrom && tFrom.value !== '' ? parseInt(tFrom.value, 10) : null;
+      const timeTo = tTo && tTo.value !== '' ? parseInt(tTo.value, 10) : null;
       const sortBy = sortByInput ? sortByInput.value : 'name';
 
       let filtered = games.filter(g => {
@@ -866,7 +919,7 @@
           matchesType = itemType === 'base';
         }
 
-        // Filtro Giocatori "Da - A" rigoroso: un gioco è valido se il suo range di supporto interseca o copre la ricerca
+        // Filtro Giocatori "Da - A" ottimizzato e corretto
         const minP = extractMinPlayers(g.players);
         const maxP = extractMaxPlayers(g.players);
         let matchesPlayers = true;
