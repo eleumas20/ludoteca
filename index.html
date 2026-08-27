@@ -16,10 +16,10 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen pb-24 font-sans antialiased selection:bg-indigo-500 selection:text-white">
 
-  <!-- Header -->
+  <!-- Header fluida ottimizzata per desktop e mobile -->
   <header class="sticky top-0 z-30 bg-slate-900/95 backdrop-blur-md border-b border-slate-800 px-4 py-3 shadow-lg">
-    <div class="max-w-4xl mx-auto flex items-center justify-between">
-      <div class="flex items-center gap-2">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row items-center justify-between gap-3">
+      <div class="flex items-center justify-between w-md md:w-auto gap-2">
         <h1 class="text-xl font-black bg-gradient-to-r from-indigo-400 to-purple-400 bg-clip-text text-transparent">🎲 Ludoteca</h1>
         <div class="flex gap-1.5">
           <button type="button" onclick="openLeaderboardModal()" class="bg-amber-500/25 hover:bg-amber-500/35 text-amber-300 border border-amber-500/40 text-xs px-2.5 py-1 rounded-lg font-bold flex items-center gap-1 active:scale-95 cursor-pointer">
@@ -30,7 +30,7 @@
           </button>
         </div>
       </div>
-      <div id="headerActions" class="flex gap-2 items-center">
+      <div id="headerActions" class="flex flex-wrap gap-2 items-center justify-end">
         <button type="button" onclick="openQrModal()" title="Condividi QR Code" class="p-2 bg-slate-800 hover:bg-slate-700 active:scale-95 rounded-lg text-xs font-semibold text-emerald-300 border border-emerald-700/60 flex items-center gap-1 cursor-pointer">
           📱 <span class="hidden sm:inline">QR Code</span>
         </button>
@@ -47,15 +47,15 @@
       </div>
     </div>
 
-    <!-- Barra Ricerca, Filtri Avanzati & Ordinamento -->
-    <div class="max-w-4xl mx-auto mt-3 space-y-2">
-      <div class="flex flex-col sm:flex-row gap-2">
+    <!-- Barra Ricerca, Filtri & Ordinamento a larghezza estesa -->
+    <div class="max-w-7xl mx-auto mt-3 space-y-2">
+      <div class="flex flex-col lg:flex-row gap-2">
         <div class="relative flex-1">
           <input type="text" id="searchInput" oninput="renderGames()" placeholder="Cerca nella tua ludoteca..." class="w-full bg-slate-800 text-sm rounded-lg pl-9 pr-3 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 placeholder-slate-400 text-white">
           <span class="absolute left-3 top-2.5 text-slate-400 text-sm">🔍</span>
         </div>
         
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-2 items-center">
           <button type="button" onclick="openVotingModal()" class="bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white text-xs px-3 py-2 rounded-lg font-bold flex items-center gap-1 shadow-md active:scale-95 cursor-pointer">
             🗳️ Vota Serata
           </button>
@@ -69,19 +69,19 @@
           </select>
 
           <!-- Filtri Range Da - A per Giocatori -->
-          <div class="flex items-center bg-slate-800 rounded-lg px-2 border border-slate-700 text-xs text-slate-300 gap-1">
+          <div class="flex items-center bg-slate-800 rounded-lg px-2 border border-slate-700 text-xs text-slate-300 gap-1 py-1.5">
             <span>👥 Giocatori:</span>
-            <input type="number" id="filterPlayersFrom" min="1" max="20" placeholder="Da" oninput="renderGames()" class="w-10 bg-slate-900 text-white text-center rounded px-1 py-1 focus:outline-none focus:border-indigo-500">
+            <input type="number" id="filterPlayersFrom" min="1" max="20" placeholder="Da" oninput="renderGames()" class="w-10 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
             <span>-</span>
-            <input type="number" id="filterPlayersTo" min="1" max="20" placeholder="A" oninput="renderGames()" class="w-10 bg-slate-900 text-white text-center rounded px-1 py-1 focus:outline-none focus:border-indigo-500">
+            <input type="number" id="filterPlayersTo" min="1" max="20" placeholder="A" oninput="renderGames()" class="w-10 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
           </div>
 
           <!-- Filtri Range Da - A per Durata (minuti) -->
-          <div class="flex items-center bg-slate-800 rounded-lg px-2 border border-slate-700 text-xs text-slate-300 gap-1">
+          <div class="flex items-center bg-slate-800 rounded-lg px-2 border border-slate-700 text-xs text-slate-300 gap-1 py-1.5">
             <span>⏱️ Minuti:</span>
-            <input type="number" id="filterTimeFrom" min="0" max="600" placeholder="Da" oninput="renderGames()" class="w-12 bg-slate-900 text-white text-center rounded px-1 py-1 focus:outline-none focus:border-indigo-500">
+            <input type="number" id="filterTimeFrom" min="0" max="600" placeholder="Da" oninput="renderGames()" class="w-12 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
             <span>-</span>
-            <input type="number" id="filterTimeTo" min="0" max="600" placeholder="A" oninput="renderGames()" class="w-12 bg-slate-900 text-white text-center rounded px-1 py-1 focus:outline-none focus:border-indigo-500">
+            <input type="number" id="filterTimeTo" min="0" max="600" placeholder="A" oninput="renderGames()" class="w-12 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
           </div>
 
           <select id="sortBy" onchange="renderGames()" class="bg-slate-800 text-xs sm:text-sm rounded-lg px-2.5 py-2 border border-slate-700 focus:outline-none focus:border-indigo-500 text-slate-300 cursor-pointer">
@@ -118,9 +118,9 @@
     </div>
   </header>
 
-  <!-- Griglia Card -->
-  <main class="max-w-4xl mx-auto px-4 mt-4">
-    <div id="gamesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+  <!-- Griglia Card Fluida a pieno schermo su desktop -->
+  <main class="max-w-7xl mx-auto px-4 mt-6">
+    <div id="gamesGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
     <div id="emptyState" class="hidden text-center py-16 text-slate-500">
       <p class="text-4xl mb-2">🎲</p>
       <p class="text-lg font-medium">Nessun gioco corrisponde ai filtri</p>
@@ -168,7 +168,6 @@
           <div id="detailExpansionsList" class="space-y-1.5"></div>
         </div>
 
-        <!-- Sezione Selezione Espansioni per la Partita Corrente (Solo per Giochi Base) -->
         <div id="gameExpansionsSelectorSection" class="hidden bg-indigo-950/30 p-3.5 rounded-xl border border-indigo-800/60 space-y-2">
           <h3 class="text-xs font-bold text-indigo-300 uppercase tracking-wider flex items-center gap-1.5">
             🧩 Includi Espansioni in questa Partita:
@@ -185,7 +184,6 @@
             </div>
           </div>
 
-          <!-- Sezione Vittorie (Nascosta automaticamente per le espansioni dipendenti) -->
           <div id="winnerSectionContainer" class="pt-2 border-t border-slate-700/50">
             <span class="text-xs font-bold text-amber-400 block mb-1.5">🏆 Assegna Vittoria a Giocatore</span>
             <div class="flex gap-2">
@@ -542,17 +540,15 @@
       }
     }
 
-    // Normalizzazione e raggruppamento generi simili (es. asimmetria/asimmetrico)
     function normalizeTag(tag) {
       let clean = tag.toLowerCase().trim();
-      // Raggruppamento plurali/femminili/varianti comuni
       if (clean === 'asimmetrico' || clean === 'asimmetrie') clean = 'asimmetria';
-      if (clean === 'gestionali') clean = 'gestionale';
+      if (clean === 'gestionali' || clean === 'gestionale / eurogame') clean = 'gestionale';
       if (clean === 'cooperativi') clean = 'cooperativo';
       if (clean === 'competitivi') clean = 'competitivo';
-      if (clean === 'carte') clean = 'gioco di carte';
-      if (clean === 'dadi') clean = 'lancio di dadi';
-      // Prima lettera maiuscola
+      if (clean === 'carte' || clean === 'gioco di carte') clean = 'carte';
+      if (clean === 'dadi' || clean === 'lancio di dadi') clean = 'dadi';
+      if (clean === 'piazzamento lavoratori') clean = 'piazzamento lavoratori';
       return clean.charAt(0).toUpperCase() + clean.slice(1);
     }
 
@@ -573,7 +569,7 @@
     }
 
     function getDynamicTags() {
-      const tagsMap = new Map(); // Mappa per gestire la forma canonica e la visualizzazione pulita
+      const tagsMap = new Map();
       games.forEach(g => {
         if (g.category) {
           g.category.split(',').forEach(part => {
@@ -870,12 +866,14 @@
           matchesType = itemType === 'base';
         }
 
+        // Filtro Giocatori "Da - A" corretto e rigoroso
         const minP = extractMinPlayers(g.players);
         const maxP = extractMaxPlayers(g.players);
         let matchesPlayers = true;
         if (playersFrom !== null && maxP < playersFrom) matchesPlayers = false;
         if (playersTo !== null && minP > playersTo) matchesPlayers = false;
 
+        // Filtro Durata "Da - A" (minuti)
         const avgTime = parseNumericMinutes(g.time);
         let matchesTime = true;
         if (timeFrom !== null && avgTime < timeFrom && avgTime > 0) matchesTime = false;
@@ -909,8 +907,8 @@
 
       if (!grid) return;
       grid.className = isCompactView 
-        ? "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5" 
-        : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4";
+        ? "grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2.5" 
+        : "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4";
       
       grid.innerHTML = '';
       const emptyState = document.getElementById('emptyState');
@@ -1306,7 +1304,6 @@ Struttura JSON:
         gameExpSec.classList.add('hidden');
       }
 
-      // Nascondi sezione inserimento vittorie se è un'espansione dipendente
       const winnerSec = document.getElementById('winnerSectionContainer');
       if (winnerSec) {
         winnerSec.classList.toggle('hidden', itemType === 'expansion');
@@ -1436,7 +1433,7 @@ Struttura JSON:
     function addWinnerScore() {
       if (isReadonly) return;
       const game = games.find(g => g.id === currentSelectedId);
-      if (!game || game.itemType === 'expansion') return; // Blocco sicurezza espansioni dipendenti
+      if (!game || game.itemType === 'expansion') return;
 
       const input = document.getElementById('winnerNameInput');
       if (!input) return;
