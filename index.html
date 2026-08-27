@@ -47,7 +47,7 @@
       </div>
     </div>
 
-    <!-- Barra Ricerca, Filtri Avanzati "Da-A" & Ordinamento -->
+    <!-- Barra Ricerca, Filtri Avanzati & Ordinamento -->
     <div class="max-w-4xl mx-auto mt-3 space-y-2">
       <div class="flex flex-col sm:flex-row gap-2">
         <div class="relative flex-1">
@@ -107,11 +107,13 @@
         <div id="activeFiltersSummary" class="text-indigo-400 font-semibold"></div>
       </div>
 
-      <!-- Tag Dinamici estratti dai tuoi giochi -->
-      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
-        <span class="text-[11px] font-bold text-slate-400 shrink-0 mr-1">Filtra per genere (dinamico):</span>
-        <div id="tagFiltersContainer" class="flex gap-1.5"></div>
-        <button type="button" id="clearTagsBtn" onclick="clearSelectedTags()" class="hidden text-[11px] text-rose-400 underline font-semibold shrink-0 ml-1 cursor-pointer">Azzera filtri</button>
+      <!-- Tag Dinamici con Frecce di Scorrimento -->
+      <div class="flex items-center gap-1.5 text-xs">
+        <span class="text-[11px] font-bold text-slate-400 shrink-0">Genere:</span>
+        <button type="button" onclick="scrollTags(-200)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-6 h-6 rounded-lg font-bold flex items-center justify-center shrink-0 cursor-pointer text-xs">◀</button>
+        <div id="tagFiltersContainer" class="flex gap-1.5 overflow-x-auto no-scrollbar scroll-smooth flex-1 py-1"></div>
+        <button type="button" onclick="scrollTags(200)" class="bg-slate-800 hover:bg-slate-700 text-slate-300 w-6 h-6 rounded-lg font-bold flex items-center justify-center shrink-0 cursor-pointer text-xs">▶</button>
+        <button type="button" id="clearTagsBtn" onclick="clearSelectedTags()" class="hidden text-[11px] text-rose-400 underline font-semibold shrink-0 ml-1 cursor-pointer">Azzera</button>
       </div>
     </div>
   </header>
@@ -183,7 +185,8 @@
             </div>
           </div>
 
-          <div class="pt-2 border-t border-slate-700/50">
+          <!-- Sezione Vittorie (Nascosta automaticamente per le espansioni dipendenti) -->
+          <div id="winnerSectionContainer" class="pt-2 border-t border-slate-700/50">
             <span class="text-xs font-bold text-amber-400 block mb-1.5">🏆 Assegna Vittoria a Giocatore</span>
             <div class="flex gap-2">
               <input type="text" id="winnerNameInput" placeholder="Nome vincitore..." class="flex-1 bg-slate-900 text-xs rounded-lg px-3 py-2 border border-slate-700 text-white focus:outline-none focus:border-amber-500">
@@ -532,6 +535,27 @@
       renderGames();
     }
 
+    function scrollTags(offset) {
+      const container = document.getElementById('tagFiltersContainer');
+      if (container) {
+        container.scrollBy({ left: offset, behavior: 'smooth' });
+      }
+    }
+
+    // Normalizzazione e raggruppamento generi simili (es. asimmetria/asimmetrico)
+    function normalizeTag(tag) {
+      let clean = tag.toLowerCase().trim();
+      // Raggruppamento plurali/femminili/varianti comuni
+      if (clean === 'asimmetrico' || clean === 'asimmetrie') clean = 'asimmetria';
+      if (clean === 'gestionali') clean = 'gestionale';
+      if (clean === 'cooperativi') clean = 'cooperativo';
+      if (clean === 'competitivi') clean = 'competitivo';
+      if (clean === 'carte') clean = 'gioco di carte';
+      if (clean === 'dadi') clean = 'lancio di dadi';
+      // Prima lettera maiuscola
+      return clean.charAt(0).toUpperCase() + clean.slice(1);
+    }
+
     function toggleTagFilter(tag) {
       if (selectedTags.includes(tag)) {
         selectedTags = selectedTags.filter(t => t !== tag);
@@ -548,18 +572,20 @@
       renderGames();
     }
 
-    // Estrae dinamicamente tutti i generi unici presenti nella ludoteca
     function getDynamicTags() {
-      const tagsSet = new Set();
+      const tagsMap = new Map(); // Mappa per gestire la forma canonica e la visualizzazione pulita
       games.forEach(g => {
         if (g.category) {
           g.category.split(',').forEach(part => {
-            const clean = part.trim();
-            if (clean) tagsSet.add(clean);
+            const raw = part.trim();
+            if (raw) {
+              const normalized = normalizeTag(raw);
+              tagsMap.set(normalized, normalized);
+            }
           });
         }
       });
-      return Array.from(tagsSet).sort();
+      return Array.from(tagsMap.keys()).sort();
     }
 
     function renderTagFilters() {
@@ -570,7 +596,7 @@
 
       const dynamicTags = getDynamicTags();
       if (dynamicTags.length === 0) {
-        container.innerHTML = '<span class="text-[11px] text-slate-500 italic">Nessun genere inserito nei giochi</span>';
+        container.innerHTML = '<span class="text-[11px] text-slate-500 italic">Nessun genere inserito</span>';
         if (clearBtn) clearBtn.classList.add('hidden');
         return;
       }
@@ -844,21 +870,21 @@
           matchesType = itemType === 'base';
         }
 
-        // Filtro Giocatori "Da - A"
         const minP = extractMinPlayers(g.players);
         const maxP = extractMaxPlayers(g.players);
         let matchesPlayers = true;
         if (playersFrom !== null && maxP < playersFrom) matchesPlayers = false;
         if (playersTo !== null && minP > playersTo) matchesPlayers = false;
 
-        // Filtro Durata "Da - A" (minuti)
         const avgTime = parseNumericMinutes(g.time);
         let matchesTime = true;
         if (timeFrom !== null && avgTime < timeFrom && avgTime > 0) matchesTime = false;
         if (timeTo !== null && avgTime > timeTo) matchesTime = false;
 
         const gameCategory = (g.category || '').toLowerCase();
-        const matchesTags = selectedTags.length === 0 || selectedTags.every(t => gameCategory.includes(t.toLowerCase()));
+        const matchesTags = selectedTags.length === 0 || selectedTags.every(t => {
+          return gameCategory.includes(t.toLowerCase());
+        });
 
         return matchesSearch && matchesType && matchesPlayers && matchesTime && matchesTags;
       });
@@ -1099,7 +1125,7 @@ Identifica accuratamente la tipologia:
 - "expansion" se è un'espansione che richiede obbligatoriamente il gioco base;
 - "standalone" se è un'espansione/spin-off giocabile anche da sola senza il gioco base.
 
-Nel campo "category", includi 2 o 3 categorie/meccaniche pertinenti (es. Cooperativo, Gestionale, Deck Building, Strategia, Party Game, Dadi, Carte).
+Nel campo "category", includi 2 o 3 categorie/meccaniche pertinenti.
 
 Struttura JSON:
 {
@@ -1263,7 +1289,6 @@ Struttura JSON:
         expContainer.classList.add('hidden');
       }
 
-      // Sezione Checkbox Espansioni utilizzabili per il Gioco Base
       const gameExpSec = document.getElementById('gameExpansionsSelectorSection');
       const gameExpChecks = document.getElementById('gameExpansionsCheckboxes');
       if (itemType === 'base' && attachedExpansions.length > 0 && gameExpSec && gameExpChecks) {
@@ -1279,6 +1304,12 @@ Struttura JSON:
         gameExpSec.classList.remove('hidden');
       } else if (gameExpSec) {
         gameExpSec.classList.add('hidden');
+      }
+
+      // Nascondi sezione inserimento vittorie se è un'espansione dipendente
+      const winnerSec = document.getElementById('winnerSectionContainer');
+      if (winnerSec) {
+        winnerSec.classList.toggle('hidden', itemType === 'expansion');
       }
 
       const diffEl = document.getElementById('detailDifficulty');
@@ -1316,8 +1347,6 @@ Struttura JSON:
       if (isReadonly) {
         const starsLabel = document.getElementById('detailStarsLabel');
         if (starsLabel) starsLabel.innerText = "Voto";
-        const playsSec = document.getElementById('detailPlaysSection');
-        if (playsSec) playsSec.classList.add('hidden');
         const commSec = document.getElementById('detailCommentSection');
         if (commSec) commSec.classList.add('hidden');
         const actBtns = document.getElementById('detailActionButtons');
@@ -1388,7 +1417,6 @@ Struttura JSON:
       
       game.plays = Math.max(0, (game.plays || 0) + delta);
 
-      // Aggiornamento automatico delle partite sulle espansioni collegate e spuntate
       if (delta > 0 && game.usedExpansions) {
         Object.entries(game.usedExpansions).forEach(([expId, isUsed]) => {
           if (isUsed) {
@@ -1407,19 +1435,19 @@ Struttura JSON:
 
     function addWinnerScore() {
       if (isReadonly) return;
+      const game = games.find(g => g.id === currentSelectedId);
+      if (!game || game.itemType === 'expansion') return; // Blocco sicurezza espansioni dipendenti
+
       const input = document.getElementById('winnerNameInput');
       if (!input) return;
       const name = input.value.trim();
       if (!name) return;
 
-      const game = games.find(g => g.id === currentSelectedId);
-      if (!game) return;
       if (!game.winners) game.winners = {};
 
       game.winners[name] = (game.winners[name] || 0) + 1;
       game.plays = (game.plays || 0) + 1;
 
-      // Incrementa le partite anche per le espansioni usate in questa partita
       if (game.usedExpansions) {
         Object.entries(game.usedExpansions).forEach(([expId, isUsed]) => {
           if (isUsed) {
@@ -1457,7 +1485,7 @@ Struttura JSON:
           <span class="text-slate-300 font-medium">👤 ${player}</span>
           <div class="flex items-center gap-2">
             <span class="font-bold text-amber-400">${wins} ${wins === 1 ? 'vittoria' : 'vittorie'}</span>
-            ${!isReadonly ? `<button type="button" onclick="removeWin('${player}')" class="text-[10px] text-slate-500 hover:text-rose-400 px-1 font-bold cursor-pointer">✕</button>` : ''}
+            ${(!isReadonly && game.itemType !== 'expansion') ? `<button type="button" onclick="removeWin('${player}')" class="text-[10px] text-slate-500 hover:text-rose-400 px-1 font-bold cursor-pointer">✕</button>` : ''}
           </div>
         `;
         list.appendChild(row);
@@ -1467,7 +1495,7 @@ Struttura JSON:
     function removeWin(player) {
       if (isReadonly) return;
       const game = games.find(g => g.id === currentSelectedId);
-      if (!game || !game.winners || !game.winners[player]) return;
+      if (!game || game.itemType === 'expansion' || !game.winners || !game.winners[player]) return;
       game.winners[player]--;
       if (game.winners[player] <= 0) delete game.winners[player];
       renderGameLeaderboard(game);
