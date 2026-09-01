@@ -158,7 +158,7 @@
         </div>
       </div>
       <div class="text-center text-[10px] text-slate-500 border-t border-slate-800 pt-3">
-        Ludoteca da Tavolo v3.6
+        Ludoteca da Tavolo v3.7
       </div>
     </div>
   </div>
@@ -475,6 +475,35 @@
     let voteCounts = {};
     let isReadonly = false;
 
+    // Normalizzazione automatica all'avvio di tutti i giochi salvati nel browser
+    function normalizeExistingGamesData() {
+      let modified = false;
+      games.forEach(g => {
+        // Normalizzazione categorie inglesi/italiane comuni
+        if (g.category) {
+          let cats = g.category.split(',').map(c => {
+            let clean = c.trim().toLowerCase();
+            if (clean === 'cooperative' || clean === 'co-op') return 'Cooperativo';
+            if (clean === 'competitive') return 'Competitivo';
+            if (clean === 'strategy') return 'Strategia';
+            if (clean === 'card game' || clean === 'gioco di carte') return 'Carte';
+            if (clean === 'dice') return 'Dadi';
+            if (clean === 'eurogame' || clean === 'gestionali') return 'Gestionale';
+            if (clean === 'party game') return 'Party Game';
+            return c.trim().charAt(0).toUpperCase() + c.trim().slice(1);
+          });
+          const newCatStr = cats.join(', ');
+          if (newCatStr !== g.category) {
+            g.category = newCatStr;
+            modified = true;
+          }
+        }
+      });
+      if (modified) {
+        localStorage.setItem('boardgames_db', JSON.stringify(games));
+      }
+    }
+
     function checkReadonlyMode() {
       const urlParams = new URLSearchParams(window.location.search);
       if (urlParams.get('view') === 'readonly') {
@@ -678,7 +707,7 @@
       return map[diff] || 2;
     }
 
-    // Estrazione rigorosa e universale dei giocatori per il filtro Da-A
+    // Estrazione corretta e robusta dei giocatori per il filtro Da-A
     function extractMinPlayers(playersStr) {
       if (!playersStr) return 1;
       const matches = playersStr.match(/\d+/g);
@@ -916,14 +945,14 @@
           matchesType = itemType === 'base';
         }
 
-        // Filtro Giocatori Da-A corretto e rigoroso
+        // Filtro Giocatori "Da - A" corretto e rigoroso
         const minP = extractMinPlayers(g.players);
         const maxP = extractMaxPlayers(g.players);
         let matchesPlayers = true;
         if (playersFrom !== null && maxP < playersFrom) matchesPlayers = false;
         if (playersTo !== null && minP > playersTo) matchesPlayers = false;
 
-        // Filtro Durata Da-A
+        // Filtro Durata "Da - A"
         const avgTime = parseNumericMinutes(g.time);
         let matchesTime = true;
         if (timeFrom !== null && avgTime < timeFrom && avgTime > 0) matchesTime = false;
@@ -1805,6 +1834,7 @@ Struttura JSON:
       reader.onload = function(event) {
         try {
           games = JSON.parse(event.target.result);
+          normalizeExistingGamesData();
           saveToStorage();
           alert('Dati importati con successo!');
         } catch (err) {
@@ -1816,6 +1846,7 @@ Struttura JSON:
 
     document.addEventListener('DOMContentLoaded', () => {
       checkReadonlyMode();
+      normalizeExistingGamesData();
       renderTagFilters();
       renderGames();
     });
