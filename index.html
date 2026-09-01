@@ -86,7 +86,7 @@
             <input type="number" id="filterPlayersTo" min="1" max="20" placeholder="A" oninput="renderGames()" class="w-10 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
           </div>
 
-          <!-- Filtri Range Da - A per Durata (minuti) -->
+          <!-- Filtro Range Da - A per Durata (minuti) -->
           <div class="flex items-center bg-slate-800 rounded-lg px-2 border border-slate-700 text-xs text-slate-300 gap-1 py-1.5">
             <span>⏱️ Minuti:</span>
             <input type="number" id="filterTimeFrom" min="0" max="600" placeholder="Da" oninput="renderGames()" class="w-12 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
@@ -465,7 +465,57 @@
   </div>
 
   <script>
-    let games = JSON.parse(localStorage.getItem('boardgames_db')) || [];
+    let games = JSON.parse(localStorage.getItem('boardgames_db')) || [
+      {
+        "id": "1787407741717",
+        "name": "Catan",
+        "itemType": "base",
+        "parentGameId": null,
+        "category": "Gestionali",
+        "difficulty": "Facile",
+        "players": "3-4",
+        "time": "60-90 min",
+        "rating": 3,
+        "plays": 1,
+        "winners": {},
+        "desc": "Un celebre gioco di strategia e gestione risorse in cui i giocatori competono per colonizzare l'isola di Catan.",
+        "comment": "",
+        "image": "https://upload.wikimedia.org/wikipedia/it/4/45/Coloni_di_catan_Logo.png"
+      },
+      {
+        "id": "1787407852217",
+        "name": "Eldritch Horror",
+        "itemType": "base",
+        "parentGameId": null,
+        "category": "Avventura",
+        "difficulty": "Difficile",
+        "players": "1-8",
+        "time": "120-240 min",
+        "rating": 4,
+        "plays": 1,
+        "winners": {},
+        "desc": "Eldritch Horror è un gioco cooperativo d'avventura ambientato attorno al mondo e ispirato ai Miti di H.P. Lovecraft.",
+        "comment": "",
+        "image": "https://cf.geekdo-images.com/oxdsZKIX5_3ovDo38EIaeg__imagepagezoom/img/wYqqTF85NitUwDdgJ5TGZvnL7EA=/fit-in/1200x900/filters:no_upscale():strip_icc()/pic1872452.jpg"
+      },
+      {
+        "id": "1787407947799",
+        "name": "Eldritch Horror: I Reami del Sogno",
+        "itemType": "expansion",
+        "parentGameId": "1787407852217",
+        "category": "Avventura",
+        "difficulty": "Difficile",
+        "players": "1-8",
+        "time": "120-240 min",
+        "rating": 4,
+        "plays": 0,
+        "winners": {},
+        "desc": "Espansione per Eldritch Horror che introduce un nuovo tabellone laterale dedicato all'esplorazione dei Reami del Sogno.",
+        "comment": "",
+        "image": ""
+      }
+    ];
+
     let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
     let currentSelectedId = null;
 
@@ -475,11 +525,9 @@
     let voteCounts = {};
     let isReadonly = false;
 
-    // Normalizzazione automatica all'avvio: converte vecchie categorie e formatta i giocatori in formato pulito
     function normalizeExistingGamesData() {
       let modified = false;
       games.forEach(g => {
-        // Normalizzazione categorie nelle nuove categorie semplici
         if (g.category) {
           let cleanCat = g.category.toLowerCase().trim();
           if (cleanCat.includes('eurogame') || cleanCat.includes('gestional') || cleanCat.includes('economi')) cleanCat = 'Gestionali';
@@ -497,7 +545,6 @@
           }
         }
 
-        // Normalizzazione stringa giocatori per estrazione corretta Da-A
         if (g.players) {
           const numbers = g.players.match(/\d+/g);
           if (numbers && numbers.length > 0) {
@@ -574,7 +621,7 @@
         renderTagFilters();
         renderGames();
       } catch (err) {
-        alert("Spazio di memoria locale esaurito! Usa link URL web anziché file pesanti per le immagini.");
+        alert("Spazio di memoria locale esaurito!");
       }
     }
 
@@ -706,7 +753,6 @@
       return map[diff] || 2;
     }
 
-    // Estrazione pulita dei giocatori per il filtro Da-A
     function extractMinPlayers(playersStr) {
       if (!playersStr) return 1;
       const matches = playersStr.match(/\d+/g);
@@ -884,7 +930,7 @@
           <div class="space-y-1.5 max-h-40 overflow-y-auto">
             ${sortedWinners.length === 0 ? '<p class="text-xs text-slate-500 italic">Nessuna vittoria registrata.</p>' : 
               sortedWinners.map(([player, wins]) => {
-                const perc = totalWinsSum > 0 ? ((wins / totalWinsSum) * 100).toFixed(1) : 0;
+                const perc = totalWinsSum ? ((wins / totalWinsSum) * 100).toFixed(1) : 0;
                 return `
                   <div class="flex justify-between items-center bg-slate-900/60 px-2.5 py-1.5 rounded-lg text-xs border border-slate-800">
                     <span class="text-white font-semibold">${player}</span>
@@ -944,7 +990,7 @@
           matchesType = itemType === 'base';
         }
 
-        // Filtro Giocatori Da-A rigoroso e funzionante
+        // Filtro Giocatori Da-A
         const minP = extractMinPlayers(g.players);
         const maxP = extractMaxPlayers(g.players);
         let matchesPlayers = true;
