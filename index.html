@@ -78,7 +78,7 @@
             <option value="wishlist">⭐ Wishlist</option>
           </select>
 
-          <!-- Filtro Range Da - A per Giocatori -->
+          <!-- Filtri Range Da - A per Giocatori -->
           <div class="flex items-center bg-slate-800 rounded-lg px-2 border border-slate-700 text-xs text-slate-300 gap-1 py-1.5">
             <span>👥 Giocatori:</span>
             <input type="number" id="filterPlayersFrom" min="1" max="20" placeholder="Da" oninput="renderGames()" class="w-10 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
@@ -86,7 +86,7 @@
             <input type="number" id="filterPlayersTo" min="1" max="20" placeholder="A" oninput="renderGames()" class="w-10 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
           </div>
 
-          <!-- Filtro Range Da - A per Durata (minuti) -->
+          <!-- Filtri Range Da - A per Durata (minuti) -->
           <div class="flex items-center bg-slate-800 rounded-lg px-2 border border-slate-700 text-xs text-slate-300 gap-1 py-1.5">
             <span>⏱️ Minuti:</span>
             <input type="number" id="filterTimeFrom" min="0" max="600" placeholder="Da" oninput="renderGames()" class="w-12 bg-slate-900 text-white text-center rounded px-1 py-0.5 focus:outline-none focus:border-indigo-500">
@@ -158,7 +158,7 @@
         </div>
       </div>
       <div class="text-center text-[10px] text-slate-500 border-t border-slate-800 pt-3">
-        Ludoteca da Tavolo v3.8
+        Ludoteca da Tavolo v3.9
       </div>
     </div>
   </div>
@@ -465,57 +465,7 @@
   </div>
 
   <script>
-    let games = JSON.parse(localStorage.getItem('boardgames_db')) || [
-      {
-        "id": "1787407741717",
-        "name": "Catan",
-        "itemType": "base",
-        "parentGameId": null,
-        "category": "Gestionali",
-        "difficulty": "Facile",
-        "players": "3-4",
-        "time": "60-90 min",
-        "rating": 3,
-        "plays": 1,
-        "winners": {},
-        "desc": "Un celebre gioco di strategia e gestione risorse in cui i giocatori competono per colonizzare l'isola di Catan.",
-        "comment": "",
-        "image": "https://upload.wikimedia.org/wikipedia/it/4/45/Coloni_di_catan_Logo.png"
-      },
-      {
-        "id": "1787407852217",
-        "name": "Eldritch Horror",
-        "itemType": "base",
-        "parentGameId": null,
-        "category": "Avventura",
-        "difficulty": "Difficile",
-        "players": "1-8",
-        "time": "120-240 min",
-        "rating": 4,
-        "plays": 1,
-        "winners": {},
-        "desc": "Eldritch Horror è un gioco cooperativo d'avventura ambientato attorno al mondo e ispirato ai Miti di H.P. Lovecraft.",
-        "comment": "",
-        "image": "https://cf.geekdo-images.com/oxdsZKIX5_3ovDo38EIaeg__imagepagezoom/img/wYqqTF85NitUwDdgJ5TGZvnL7EA=/fit-in/1200x900/filters:no_upscale():strip_icc()/pic1872452.jpg"
-      },
-      {
-        "id": "1787407947799",
-        "name": "Eldritch Horror: I Reami del Sogno",
-        "itemType": "expansion",
-        "parentGameId": "1787407852217",
-        "category": "Avventura",
-        "difficulty": "Difficile",
-        "players": "1-8",
-        "time": "120-240 min",
-        "rating": 4,
-        "plays": 0,
-        "winners": {},
-        "desc": "Espansione per Eldritch Horror che introduce un nuovo tabellone laterale dedicato all'esplorazione dei Reami del Sogno.",
-        "comment": "",
-        "image": ""
-      }
-    ];
-
+    let games = JSON.parse(localStorage.getItem('boardgames_db')) || [];
     let geminiApiKey = localStorage.getItem('gemini_api_key') || '';
     let currentSelectedId = null;
 
@@ -990,12 +940,16 @@
           matchesType = itemType === 'base';
         }
 
-        // Filtro Giocatori Da-A
+        // Filtro Giocatori Da-A corretto (Intersezione / Sovrapposizione range)
         const minP = extractMinPlayers(g.players);
         const maxP = extractMaxPlayers(g.players);
         let matchesPlayers = true;
-        if (playersFrom !== null && maxP < playersFrom) matchesPlayers = false;
-        if (playersTo !== null && minP > playersTo) matchesPlayers = false;
+        const fFrom = playersFrom !== null ? playersFrom : 1;
+        const fTo = playersTo !== null ? playersTo : 99;
+        
+        if (maxP < fFrom || minP > fTo) {
+          matchesPlayers = false;
+        }
 
         // Filtro Durata Da-A
         const avgTime = parseNumericMinutes(g.time);
