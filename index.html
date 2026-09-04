@@ -158,7 +158,7 @@
         </div>
       </div>
       <div class="text-center text-[10px] text-slate-500 border-t border-slate-800 pt-3">
-        Ludoteca da Tavolo v3.9
+        Ludoteca da Tavolo v3.10
       </div>
     </div>
   </div>
@@ -940,16 +940,17 @@
           matchesType = itemType === 'base';
         }
 
-        // Filtro Giocatori Da-A corretto (Intersezione / Sovrapposizione range)
+        // Filtro Giocatori "Da - A" rigoroso:
+        // Mostra il gioco solo se il numero massimo di giocatori supportati dal gioco 
+        // è almeno pari al numero minimo cercato (From) E il minimo supportato dal gioco 
+        // è inferiore o uguale al numero massimo cercato (To).
+        // Inoltre, se imposti un filtro massimo (To, es. 7), il gioco deve poter accogliere quel numero (maxP >= playersTo).
         const minP = extractMinPlayers(g.players);
         const maxP = extractMaxPlayers(g.players);
         let matchesPlayers = true;
-        const fFrom = playersFrom !== null ? playersFrom : 1;
-        const fTo = playersTo !== null ? playersTo : 99;
         
-        if (maxP < fFrom || minP > fTo) {
-          matchesPlayers = false;
-        }
+        if (playersFrom !== null && maxP < playersFrom) matchesPlayers = false;
+        if (playersTo !== null && maxP < playersTo) matchesPlayers = false; // Esclude i giochi che non arrivano al numero "A" inserito
 
         // Filtro Durata Da-A
         const avgTime = parseNumericMinutes(g.time);
